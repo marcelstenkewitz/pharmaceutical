@@ -279,7 +279,8 @@ class ClientRepository extends BaseRepository {
       }
     }
 
-    return reports;
+    // Reverse to show most recent reports first
+    return reports.reverse();
   }
 
   search(query) {

@@ -50,6 +50,7 @@ const ScanOut = () => {
     setBarcode("");
     setResult(null);
     setEditLine(null);
+    setSubmitStatus(null);
     setIsProcessing(false);
   };
 
@@ -198,26 +199,29 @@ const ScanOut = () => {
       console.log(`[ScanOut] 📹 SCANNER CALLBACK triggered with: "${text}"`);
       console.log(`[ScanOut] 📹 Current barcode state: "${barcode}"`);
       console.log(`[ScanOut] 📹 IsProcessing: ${isProcessing}`);
-      
+
       // Prevent processing if already processing a scan
       if (isProcessing) {
         console.debug(`[ScanOut] Ignoring duplicate scan while processing: ${text}`);
         return;
       }
-      
+
       // Validate scan input before processing
       if (!isValidScanInput(text)) {
         console.warn(`[ScanOut] Rejecting invalid scan input: ${text}`);
         return;
       }
-      
+
       // Prevent processing the same barcode multiple times
       if (barcode === text) {
         console.debug(`[ScanOut] Ignoring duplicate barcode: ${text}`);
         return;
       }
-      
+
       console.debug(`[ScanOut] 📹 Scanner setting barcode to: "${text}"`);
+      // Clear previous submit status when new scan is detected
+      setSubmitStatus(null);
+      setValidationErrors([]);
       setBarcode(text);
       control?.stop?.(); // single-shot behavior
     }
@@ -228,16 +232,21 @@ const ScanOut = () => {
 
     const fetchData = async () => {
       console.log(`[ScanOut] 🔄 fetchData called with barcode: "${barcode}"`);
-      
+
       if (!barcode) {
         console.log(`[ScanOut] 🔄 No barcode, clearing state`);
         setResult(null);
         setEditLine(null);
+        setSubmitStatus(null);
+        setValidationErrors([]);
         setIsProcessing(false);
         return;
       }
-      
+
       console.log(`[ScanOut] 🔄 Processing barcode: "${barcode}"`);
+      // Clear previous submit status when processing new barcode
+      setSubmitStatus(null);
+      setValidationErrors([]);
       // Prevent processing duplicate/concurrent requests for same barcode
       setIsProcessing(true);
       setResult({ valid: true, message: "Scanning..." });

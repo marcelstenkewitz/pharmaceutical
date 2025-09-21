@@ -112,9 +112,10 @@ const Reports = () => {
   };
 
   // Add original report numbers to preserve them after filtering
+  // Since reports are now reversed (newest first), assign numbers accordingly
   const reportsWithNumbers = reports.map((report, index) => ({
     ...report,
-    originalReportNumber: index + 1
+    originalReportNumber: reports.length - index
   }));
 
   // Filter reports based on search criteria
@@ -361,7 +362,7 @@ const Reports = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {report.lineItems.map((item) => (
+                            {report.lineItems.slice(0, 10).map((item) => (
                               <tr key={item.id}>
                                 <td className="fw-bold">{item.lineNo}</td>
                                 <td>
@@ -435,7 +436,7 @@ const Reports = () => {
 
                       {/* Mobile Card View */}
                       <div className="mobile-table-card">
-                        {report.lineItems.map((item) => (
+                        {report.lineItems.slice(0, 10).map((item) => (
                           <div key={item.id} className="mobile-item-card">
                             <div className="mobile-item-header">
                               Line #{item.lineNo}: {item.itemName}
@@ -495,6 +496,21 @@ const Reports = () => {
                           </div>
                         ))}
                       </div>
+
+                      {/* View More button if there are more than 10 items */}
+                      {report.lineItems.length > 10 && (
+                        <div className="text-center mt-3">
+                          <Button
+                            variant="outline-primary"
+                            onClick={() => handleViewReport(report)}
+                          >
+                            View All {report.lineItems.length} Items
+                          </Button>
+                          <div className="text-muted small mt-2">
+                            Showing first 10 of {report.lineItems.length} items
+                          </div>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <Alert variant="warning" className="mb-0">

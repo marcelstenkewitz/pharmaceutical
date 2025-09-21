@@ -81,6 +81,15 @@
   padding: 0.4em 0.8em;
 }
 
+/* DEA Schedule Badge specific styling */
+.badge.bg-danger,
+.badge.bg-warning,
+.badge.bg-info,
+.badge.bg-secondary {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 /* Manual entry badge styling */
 .manual-entry-badge {
   display: inline-block;
@@ -264,11 +273,21 @@
     align-items: center;
     margin-bottom: 4px;
     font-size: 0.9rem;
+    flex-wrap: wrap;
   }
-  
+
   .mobile-item-label {
     font-weight: 500;
     color: #666;
+    margin-right: 8px;
+  }
+
+  /* Mobile DEA Schedule Badge styling */
+  .mobile-item-detail .badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.6em;
+    white-space: nowrap;
+    display: inline-block;
   }
   
   .mobile-item-actions {
