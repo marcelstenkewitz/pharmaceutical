@@ -7,6 +7,7 @@ import Reports from "./components/Reports/Reports";
 import ScanOut from "./components/Scanning/ScanOut";
 import ManualEntries from "./components/Admin/ManualEntries";
 import ClientManagement from "./components/Admin/ClientManagement";
+import LabelersManagement from "./components/Admin/LabelersManagement";
 
 //TO DO
 //Move scanner logic out
@@ -30,6 +31,7 @@ const App = () => {
           {/* Admin routes */}
           <Route path="clients" element={<ClientManagement />} />
           <Route path="manual-entries" element={<ManualEntries />} />
+          <Route path="labelers" element={<LabelersManagement />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -122,6 +122,10 @@ const Scanning = () => {
     navigate("/clients");
   };
 
+  const handleManageLabelers = () => {
+    navigate("/labelers");
+  };
+
   const handleEditClient = () => {
     if (!localSelectedClient && !selectedClient) {
       alert("Please select a client to edit.");
@@ -266,6 +270,13 @@ const Scanning = () => {
             className="scanning-action-btn"
           >
             Manage Clients
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleManageLabelers}
+            className="scanning-action-btn"
+          >
+            Manage Labelers
           </Button>
         </div>
         <div className="icon-action-container">

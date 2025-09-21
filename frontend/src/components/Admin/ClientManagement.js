@@ -45,21 +45,6 @@ const ClientManagement = () => {
         label: 'Phone'
       },
       {
-        key: 'labelerName',
-        label: 'Labeler',
-        render: (client) => (
-          <div>
-            <strong>{client.labelerName || 'N/A'}</strong>
-            {client.returnInstructions && (
-              <div className="return-instructions-preview">
-                {client.returnInstructions.substring(0, 50)}
-                {client.returnInstructions.length > 50 ? '...' : ''}
-              </div>
-            )}
-          </div>
-        )
-      },
-      {
         key: 'reports',
         label: 'Reports',
         render: (client) => (
@@ -118,23 +103,6 @@ const ClientManagement = () => {
         label: 'Contact Name',
         type: 'text',
         required: false
-      },
-      {
-        name: 'labelerName',
-        label: 'Labeler Name',
-        type: 'text',
-        required: false,
-        placeholder: 'e.g., Pfizer Inc, Johnson & Johnson',
-        helpText: 'Name of the company that manufactured/labeled the product'
-      },
-      {
-        name: 'returnInstructions',
-        label: 'Return Instructions',
-        type: 'textarea',
-        rows: 3,
-        required: false,
-        placeholder: 'Detailed instructions for returning products to this labeler...',
-        helpText: 'Include phone numbers, addresses, special procedures, or portal information'
       }
     ],
     api: {
@@ -150,7 +118,7 @@ const ClientManagement = () => {
       delete: true,
       deleteConfirmation: 'modal'
     },
-    searchFields: ['businessName', 'deaNumber', 'labelerName'],
+    searchFields: ['businessName', 'deaNumber'],
     emptyMessage: "No clients available.",
     addButtonText: "Add New Client",
     itemIdField: "id",
