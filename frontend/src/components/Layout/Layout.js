@@ -12,8 +12,8 @@ const Layout = () => {
   
   console.log(window.innerWidth)
   return (
-      <Stack gap={2} className={window.innerWidth > 800 ? "col-md-5 mx-auto mt-3" : "mx-auto mt-3"}>
-        <div className="header-container" onClick={handleHeaderClick}>
+      <Stack gap={2} className="mx-auto mt-3">
+        <div className="header-container mx-auto" style={{ maxWidth: '600px' }} onClick={handleHeaderClick}>
           <h3 className="website-header">
             💊 DIRECT RETURNS
           </h3>

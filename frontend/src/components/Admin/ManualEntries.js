@@ -1,87 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Table, Button, Alert, Badge } from 'react-bootstrap';
-import { PencilSquare, Trash, Plus } from 'react-bootstrap-icons';
-import Wrapper from '../Layout/Wrapper';
+import React from 'react';
+import { Badge } from 'react-bootstrap';
 import ManualEntryModal from '../Scanning/ManualEntryModal';
-import apiService from '../../Services/ApiService';
+import apiService from '../../services/ApiService';
+import ManualEntryService from '../../services/ManualEntryService';
+import DataTable from '../Common/DataTable/DataTable';
 
 const ManualEntries = () => {
-  const [entries, setEntries] = useState({});
-  const [labelers, setLabelers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingEntry, setEditingEntry] = useState(null);
-
-  // Load manual entries on component mount
-  useEffect(() => {
-    loadManualEntries();
-  }, []);
-
-  const loadManualEntries = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [entriesResponse, labelersResponse] = await Promise.all([
-        apiService.getAllManualEntries(),
-        apiService.getLabelers()
-      ]);
-      setEntries(entriesResponse.entries || {});
-      setLabelers(labelersResponse.labelers || []);
-    } catch (error) {
-      console.error('Failed to load data:', error);
-      setError('Failed to load manual entries');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddEntry = () => {
-    setShowAddModal(true);
-  };
-
-  const handleEditEntry = (barcode, entry) => {
-    setEditingEntry({
-      barcode: barcode,
-      itemName: entry.itemName || '',
-      ndcNumber: entry.ndcNumber || '',
-      packageSize: entry.packageSize || '',
-      pricePerEA: entry.pricePerEA || '',
-      labeler_name: entry.labeler_name || ''
-    });
-    setShowEditModal(true);
-  };
-
-  const handleDeleteEntry = async (barcode) => {
-    if (!window.confirm('Are you sure you want to delete this manual entry?')) {
-      return;
-    }
-
-    try {
-      setError(null);
-      await apiService.deleteManualEntry(barcode);
-      await loadManualEntries();
-    } catch (error) {
-      console.error('Failed to delete manual entry:', error);
-      setError('Failed to delete manual entry');
-    }
-  };
-
-  const handleSaveEntry = async (formData) => {
-    try {
-      setError(null);
-      await apiService.saveManualEntry(formData.barcode, formData);
-      await loadManualEntries();
-      setShowEditModal(false);
-      setShowAddModal(false);
-      setEditingEntry(null);
-    } catch (error) {
-      console.error('Failed to save manual entry:', error);
-      setError('Failed to save manual entry');
-    }
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
@@ -91,125 +15,154 @@ const ManualEntries = () => {
     }
   };
 
-  const getReturnInstructions = (labelerName) => {
-    const labeler = labelers.find(l => l.labeler_name === labelerName);
-    return labeler ? labeler.return_instructions : 'Contact manufacturer for return instructions';
+  // Custom modal component that wraps ManualEntryModal
+  const CustomManualEntryModal = ({ show, onHide, onSave, title, initialData, error }) => {
+    const handleSubmit = async (formData) => {
+      try {
+        // Use shared service for consistent manual entry handling
+        const result = await ManualEntryService.saveManualEntry(formData);
+
+        if (result.isDuplicate) {
+          console.log(`[ManualEntries] Updated existing entry: ${result.barcode}`);
+        }
+
+        onSave(formData); // This will trigger the DataTable to reload
+      } catch (error) {
+        console.error('Failed to save manual entry:', error);
+        throw error; // Let DataTable handle the error
+      }
+    };
+
+    return (
+      <ManualEntryModal
+        show={show}
+        onHide={onHide}
+        onSubmit={handleSubmit}
+        title={title}
+        submitButtonText={initialData ? "Save Changes" : "Add Entry"}
+        initialData={initialData}
+        saveToCache={false}
+      />
+    );
   };
 
-  const entryArray = Object.entries(entries);
+  // DataTable configuration
+  const tableConfig = {
+    title: "Manual Entries Management",
+    entityName: "manual entry",
+    columns: [
+      {
+        key: 'barcode',
+        label: 'Barcode/Key',
+        render: ([barcode, entry]) => (
+          <>
+            <code>{barcode}</code>
+            {entry.isManualEntry && (
+              <Badge bg="secondary" className="ms-2">Manual</Badge>
+            )}
+          </>
+        )
+      },
+      {
+        key: 'itemName',
+        label: 'Item Name',
+        render: ([barcode, entry]) => entry.itemName || 'N/A'
+      },
+      {
+        key: 'ndcNumber',
+        label: 'NDC Number',
+        render: ([barcode, entry]) => <code>{entry.ndcNumber || 'N/A'}</code>
+      },
+      {
+        key: 'packageSize',
+        label: 'Package Size',
+        render: ([barcode, entry]) => entry.packageSize || 'N/A'
+      },
+      {
+        key: 'labeler_name',
+        label: 'Labeler Name',
+        render: ([barcode, entry]) => entry.labeler_name || 'N/A'
+      },
+      {
+        key: 'return_instructions',
+        label: 'Return Instructions',
+        render: ([barcode, entry]) => (
+          <div style={{ maxWidth: '200px', fontSize: '0.85em' }}>
+            {entry.return_instructions || 'Contact manufacturer for return instructions'}
+          </div>
+        )
+      },
+      {
+        key: 'pricePerEA',
+        label: 'Price per EA',
+        render: ([barcode, entry]) =>
+          entry.pricePerEA ? `$${parseFloat(entry.pricePerEA).toFixed(2)}` : 'N/A'
+      },
+      {
+        key: 'createdAt',
+        label: 'Created',
+        render: ([barcode, entry]) => formatDate(entry.createdAt)
+      },
+      {
+        key: 'lastUsed',
+        label: 'Last Used',
+        render: ([barcode, entry]) => formatDate(entry.lastUsed)
+      }
+    ],
+    api: {
+      load: async () => {
+        // Load both entries and labelers
+        const [entriesResponse, labelersResponse] = await Promise.all([
+          apiService.getAllManualEntries(),
+          apiService.getLabelers()
+        ]);
+
+        // Convert entries object to array of [barcode, entry] pairs
+        const entries = entriesResponse?.entries || {};
+        const entryArray = Object.entries(entries);
+
+        // Add return instructions to each entry
+        const labelers = labelersResponse?.labelers || [];
+        const enhancedEntries = entryArray.map(([barcode, entry]) => {
+          const labeler = labelers.find(l => l.labeler_name === entry.labeler_name);
+          return [barcode, {
+            ...entry,
+            return_instructions: labeler?.return_instructions
+          }];
+        });
+
+        return enhancedEntries;
+      },
+      create: async (data) => {
+        // This will be handled by the custom modal
+        return data;
+      },
+      update: async (id, data) => {
+        // This will be handled by the custom modal
+        return data;
+      },
+      delete: (barcode) => apiService.deleteManualEntry(barcode)
+    },
+    features: {
+      search: false,
+      add: true,
+      edit: true,
+      delete: true,
+      deleteConfirmation: 'alert'
+    },
+    customModals: {
+      add: CustomManualEntryModal,
+      edit: CustomManualEntryModal
+    },
+    emptyMessage: "No manual entries found. Click 'Add Manual Entry' to create your first entry.",
+    addButtonText: "Add Manual Entry",
+    itemIdField: "0" // Use the barcode (first element of array)
+  };
 
   return (
-    <Wrapper>
-      <Container className="mt-4">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>Manual Entries Management</h2>
-          <Button variant="primary" onClick={handleAddEntry}>
-            <Plus className="me-2" />
-            Add Manual Entry
-          </Button>
-        </div>
-
-        {error && (
-          <Alert variant="danger" className="mb-3">
-            {error}
-          </Alert>
-        )}
-
-        {loading ? (
-          <div className="text-center">Loading manual entries...</div>
-        ) : entryArray.length === 0 ? (
-          <Alert variant="info" className="text-center">
-            No manual entries found. Click "Add Manual Entry" to create your first entry.
-          </Alert>
-        ) : (
-          <Table striped bordered hover responsive>
-            <thead>
-              <tr>
-                <th>Barcode/Key</th>
-                <th>Item Name</th>
-                <th>NDC Number</th>
-                <th>Package Size</th>
-                <th>Labeler Name</th>
-                <th>Return Instructions</th>
-                <th>Price per EA</th>
-                <th>Created</th>
-                <th>Last Used</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entryArray.map(([barcode, entry]) => (
-                <tr key={barcode}>
-                  <td>
-                    <code>{barcode}</code>
-                    {entry.isManualEntry && (
-                      <Badge bg="secondary" className="ms-2">Manual</Badge>
-                    )}
-                  </td>
-                  <td>{entry.itemName || 'N/A'}</td>
-                  <td><code>{entry.ndcNumber || 'N/A'}</code></td>
-                  <td>{entry.packageSize || 'N/A'}</td>
-                  <td>{entry.labeler_name || 'N/A'}</td>
-                  <td style={{ maxWidth: '200px', fontSize: '0.85em' }}>
-                    {getReturnInstructions(entry.labeler_name)}
-                  </td>
-                  <td>
-                    {entry.pricePerEA ? `$${parseFloat(entry.pricePerEA).toFixed(2)}` : 'N/A'}
-                  </td>
-                  <td>{formatDate(entry.createdAt)}</td>
-                  <td>{formatDate(entry.lastUsed)}</td>
-                  <td>
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleEditEntry(barcode, entry)}
-                    >
-                      <PencilSquare />
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => handleDeleteEntry(barcode)}
-                    >
-                      <Trash />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
-
-        {/* Add Manual Entry Modal */}
-        <ManualEntryModal
-          show={showAddModal}
-          onHide={() => {
-            setShowAddModal(false);
-            setError(null);
-          }}
-          onSubmit={handleSaveEntry}
-          title="Add New Manual Entry"
-          submitButtonText="Add Entry"
-          saveToCache={false}
-        />
-
-        {/* Edit Manual Entry Modal */}
-        <ManualEntryModal
-          show={showEditModal}
-          onHide={() => {
-            setShowEditModal(false);
-            setEditingEntry(null);
-            setError(null);
-          }}
-          onSubmit={handleSaveEntry}
-          title="Edit Manual Entry"
-          submitButtonText="Save Changes"
-          initialData={editingEntry}
-          saveToCache={false}
-        />
-      </Container>
-    </Wrapper>
+    <DataTable
+      {...tableConfig}
+    />
   );
 };
 

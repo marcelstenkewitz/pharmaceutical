@@ -1,0 +1,54 @@
+/* ClientSelector mobile-responsive styling */
+.client-selector-container {
+  width: 100%;
+}
+
+.client-selector-form-group {
+  margin-bottom: 1rem;
+}
+
+.client-selector-select {
+  width: 100% !important;
+  min-height: 44px; /* Minimum touch target for mobile */
+  font-size: 16px; /* Prevents zoom on iOS */
+}
+
+/* Mobile-specific styling */
+@media (max-width: 576px) {
+  .client-selector-container {
+    width: 100%;
+  }
+
+  .client-selector-form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .client-selector-select {
+    width: 100% !important;
+    min-height: 48px;
+    font-size: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+  }
+
+  .client-selector-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 1rem;
+  }
+}
+
+/* Tablet styling */
+@media (min-width: 577px) and (max-width: 768px) {
+  .client-selector-select {
+    min-height: 46px;
+    font-size: 16px;
+  }
+}
+
+/* Desktop styling - maintain current appearance */
+@media (min-width: 769px) {
+  .client-selector-select {
+    width: 100%;
+  }
+}

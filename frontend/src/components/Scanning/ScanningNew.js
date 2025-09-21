@@ -6,6 +6,7 @@ import { ClientContext } from "../../context/ClientContext";
 import { useNavigate } from "react-router-dom";
 import Wrapper from "../Layout/Wrapper";
 import ClientSelector from "../Admin/ClientSelector";
+import { validateDEANumber } from "../../utils/deaValidator";
 import "./scanning.css";
 
 const Scanning = () => {
@@ -33,8 +34,12 @@ const Scanning = () => {
     streetAddress: "",
     city: "",
     state: "",
-    zipCode: ""
+    zipCode: "",
+    phoneNumber: "",
+    contactName: ""
   });
+  const [deaValidationError, setDeaValidationError] = useState("");
+  const [editDeaValidationError, setEditDeaValidationError] = useState("");
 
   // Load clients on component mount
   useEffect(() => {
@@ -74,11 +79,19 @@ const Scanning = () => {
       console.error("All fields are required");
       return;
     }
+
+    // Validate DEA number before submission
+    const deaValidation = validateDEANumber(newClientData.deaNumber);
+    if (!deaValidation.isValid) {
+      setDeaValidationError(deaValidation.error);
+      return;
+    }
     try {
       clearError();
       const newClient = await createClient(newClientData);
       await handleClientSelection(newClient.id);
       setShowAddClientModal(false);
+      setDeaValidationError("");
       setClientRefreshKey(prev => prev + 1);
       setNewClientData({
         businessName: "",
@@ -113,7 +126,7 @@ const Scanning = () => {
     if (clientToEdit) {
       setEditingClient({
         id: clientToEdit.id,
-        businessName: clientToEdit.businessName || clientToEdit.name || '',
+        businessName: clientToEdit.businessName || '',
         deaNumber: clientToEdit.deaNumber || '',
         streetAddress: clientToEdit.streetAddress || '',
         city: clientToEdit.city || '',
@@ -136,6 +149,13 @@ const Scanning = () => {
       console.error("All fields are required");
       return;
     }
+
+    // Validate DEA number before submission
+    const deaValidation = validateDEANumber(editingClient.deaNumber);
+    if (!deaValidation.isValid) {
+      setEditDeaValidationError(deaValidation.error);
+      return;
+    }
     
     try {
       clearError();
@@ -150,6 +170,7 @@ const Scanning = () => {
       
       setShowEditClientModal(false);
       setEditingClient(null);
+      setEditDeaValidationError("");
       setClientRefreshKey(prev => prev + 1);
       
     } catch (error) {
@@ -214,7 +235,10 @@ const Scanning = () => {
       </Stack>
 
       {/* Add Client Modal */}
-      <Modal show={showAddClientModal} onHide={() => setShowAddClientModal(false)}>
+      <Modal show={showAddClientModal} onHide={() => {
+        setShowAddClientModal(false);
+        setDeaValidationError("");
+      }}>
         <Modal.Header closeButton>
           <Modal.Title>Add New Client</Modal.Title>
         </Modal.Header>
@@ -234,9 +258,24 @@ const Scanning = () => {
               <Form.Control
                 type="text"
                 value={newClientData.deaNumber}
-                onChange={(e) => setNewClientData({...newClientData, deaNumber: e.target.value})}
+                onChange={(e) => {
+                  const deaValue = e.target.value;
+                  setNewClientData({...newClientData, deaNumber: deaValue});
+                  if (deaValue) {
+                    const validation = validateDEANumber(deaValue);
+                    setDeaValidationError(validation.isValid ? "" : validation.error);
+                  } else {
+                    setDeaValidationError("");
+                  }
+                }}
+                isInvalid={!!deaValidationError}
                 required
               />
+              {deaValidationError && (
+                <Form.Control.Feedback type="invalid">
+                  {deaValidationError}
+                </Form.Control.Feedback>
+              )}
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Street Address *</Form.Label>
@@ -277,7 +316,10 @@ const Scanning = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAddClientModal(false)}>
+          <Button variant="secondary" onClick={() => {
+            setShowAddClientModal(false);
+            setDeaValidationError("");
+          }}>
             Cancel
           </Button>
           <Button variant="primary" onClick={handleAddClient}>
@@ -290,6 +332,7 @@ const Scanning = () => {
       <Modal show={showEditClientModal} onHide={() => {
         setShowEditClientModal(false);
         setEditingClient(null);
+        setEditDeaValidationError("");
         clearError();
       }}>
         <Modal.Header closeButton>
@@ -311,9 +354,24 @@ const Scanning = () => {
               <Form.Control
                 type="text"
                 value={editingClient?.deaNumber || ''}
-                onChange={(e) => setEditingClient(prev => ({...prev, deaNumber: e.target.value}))}
+                onChange={(e) => {
+                  const deaValue = e.target.value;
+                  setEditingClient(prev => ({...prev, deaNumber: deaValue}));
+                  if (deaValue) {
+                    const validation = validateDEANumber(deaValue);
+                    setEditDeaValidationError(validation.isValid ? "" : validation.error);
+                  } else {
+                    setEditDeaValidationError("");
+                  }
+                }}
+                isInvalid={!!editDeaValidationError}
                 required
               />
+              {editDeaValidationError && (
+                <Form.Control.Feedback type="invalid">
+                  {editDeaValidationError}
+                </Form.Control.Feedback>
+              )}
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Street Address *</Form.Label>
@@ -357,6 +415,7 @@ const Scanning = () => {
           <Button variant="secondary" onClick={() => {
             setShowEditClientModal(false);
             setEditingClient(null);
+            setEditDeaValidationError("");
             clearError();
           }}>
             Cancel

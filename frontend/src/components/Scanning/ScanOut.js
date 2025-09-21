@@ -1,17 +1,18 @@
-// src/Components/Scanning/ScanOut.js
+// src/components/Scanning/ScanOut.js
 import React, { useContext, useEffect, useState } from "react";
 import Wrapper from "../Layout/Wrapper";
-import { Alert, Button } from "react-bootstrap";
+import { Alert, Button, Form } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
-import { useZxingScanner } from "./UseZxingScanner";
-import { createNdcService } from "../../Services/NdcService";
-import { createPriceService } from "../../Services/PriceService";
-import { FDAResult } from "../../Models/FdaResultModel";
-import { createForm222Line, validateForm222Line } from "../../Models/Form222Model";
+import { useZxingScanner } from "./useZxingScanner";
+import { createNdcService } from "../../services/NdcService";
+import { createPriceService } from "../../services/PriceService";
+import { FDAResult } from "../../models/FdaResultModel";
+import { createInventoryLine, validateInventoryLine } from "../../models/PharmInventoryModel";
 import { ClientContext } from "../../context/ClientContext";
+import { calculateLineTotal, calculatePackagePrice, parsePackageSize } from "../../services/PricingUtils";
 import CurrentItemsTable from "./CurrentItemsTable";
 import ManualEntryModal from "./ManualEntryModal";
-import apiService from "../../Services/ApiService";
+import apiService from "../../services/ApiService";
 import "./scanning.css";
 
 const ndcService = createNdcService();
@@ -40,6 +41,32 @@ const ScanOut = () => {
   const [submitting, setSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [showManualEntryModal, setShowManualEntryModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Function to clear scan state (for manual clearing or resetting)
+  const clearScanState = () => {
+    console.debug(`[ScanOut] Clearing scan state`);
+    setBarcode("");
+    setResult(null);
+    setEditLine(null);
+    setIsProcessing(false);
+  };
+
+  // Function to validate scan input (prevent obviously invalid inputs)
+  const isValidScanInput = (text) => {
+    if (!text || typeof text !== 'string') return false;
+    
+    // Remove non-digits to check basic format
+    const digits = text.replace(/\D/g, '');
+    
+    // Must have at least some digits
+    if (digits.length < 8) return false;
+    
+    // Reject obvious garbage (too many repeating digits, etc.)
+    if (/^(.)\1{7,}$/.test(digits)) return false; // 8+ same digits in a row
+    
+    return true;
+  };
 
   // Get effective client ID from URL or context
   const effectiveClientId = urlClientId || (selectedClient && typeof selectedClient === 'object' 
@@ -96,7 +123,7 @@ const ScanOut = () => {
     }
 
     // Validate the line item
-    const validation = validateForm222Line(editLine);
+    const validation = validateInventoryLine(editLine);
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
       setSubmitStatus({ ok: false, msg: `Validation failed: ${validation.errors.join(', ')}` });
@@ -153,32 +180,43 @@ const ScanOut = () => {
   };
 
   // Handle manual form submission from modal
-  const handleManualSubmit = async (formData) => {
-    // Create a Form222 line from manual data
-    const manualLine = createForm222Line(
-      {
-        brandName: formData.itemName, // Use itemName as brandName for Form222
-        genericName: "", // No separate generic name
-        ndcNumber: formData.ndcNumber,
-        packageSize: formData.packageSize,
-        labeler_name: formData.labeler_name
-      },
-      formData.pricePerEA ? {
-        nadac_per_unit: parseFloat(formData.pricePerEA)
-      } : null,
-      1, // Default package count to 1
-      1  // Default total quantity ordered to 1
-    );
-    
-    // Mark this as a manual entry
-    manualLine.isManualEntry = true;
-    
+  const handleManualSubmit = async (inventoryLineData) => {
+    // The data is already in the correct format from formDataToInventoryLine
+    // Just mark it as a manual entry and set it as the edit line
+    const manualLine = {
+      ...inventoryLineData,
+      isManualEntry: true
+    };
+
     setEditLine(manualLine);
   };
 
   const { control, isRunning, error } = useZxingScanner(
     "scannerVideo",
     (text) => {
+      console.log(`[ScanOut] 📹 SCANNER CALLBACK triggered with: "${text}"`);
+      console.log(`[ScanOut] 📹 Current barcode state: "${barcode}"`);
+      console.log(`[ScanOut] 📹 IsProcessing: ${isProcessing}`);
+      
+      // Prevent processing if already processing a scan
+      if (isProcessing) {
+        console.debug(`[ScanOut] Ignoring duplicate scan while processing: ${text}`);
+        return;
+      }
+      
+      // Validate scan input before processing
+      if (!isValidScanInput(text)) {
+        console.warn(`[ScanOut] Rejecting invalid scan input: ${text}`);
+        return;
+      }
+      
+      // Prevent processing the same barcode multiple times
+      if (barcode === text) {
+        console.debug(`[ScanOut] Ignoring duplicate barcode: ${text}`);
+        return;
+      }
+      
+      console.debug(`[ScanOut] 📹 Scanner setting barcode to: "${text}"`);
       setBarcode(text);
       control?.stop?.(); // single-shot behavior
     }
@@ -188,40 +226,40 @@ const ScanOut = () => {
     let ignore = false;
 
     const fetchData = async () => {
+      console.log(`[ScanOut] 🔄 fetchData called with barcode: "${barcode}"`);
+      
       if (!barcode) {
+        console.log(`[ScanOut] 🔄 No barcode, clearing state`);
         setResult(null);
         setEditLine(null);
+        setIsProcessing(false);
         return;
       }
       
+      console.log(`[ScanOut] 🔄 Processing barcode: "${barcode}"`);
+      // Prevent processing duplicate/concurrent requests for same barcode
+      setIsProcessing(true);
       setResult({ valid: true, message: "Scanning..." });
       
-      const norm = ndcService.normalizeScan(barcode);
-      if (!norm.ok) {
-        setResult({ 
-          valid: false, 
-          message: norm.reason || "Unrecognized barcode format.", 
-          allowManualEntry: true  // Allow manual entry even for invalid barcodes
-        });
-        setEditLine(null);
-        return;
-      }
-      
-      let msg = `Valid NDC-11: ${norm.ndc11}`;
+      let msg = ""; // Initialize message variable
       
       try {
-        // First check if this is a cached manual entry
+        // First check if this is a cached manual entry (before NDC normalization)
+        console.log(`[ScanOut] 🔍 About to call apiService.getManualEntry with: "${barcode}"`);
+        console.log(`[ScanOut] 🔍 Barcode type: ${typeof barcode}, length: ${barcode?.length}`);
         const manualEntry = await apiService.getManualEntry(barcode);
         
-        if (manualEntry && !ignore) {
-          msg += `\n🔧 Manual Entry (cached)`;
+        if (manualEntry) {
+          msg = `🔧 Manual Entry (cached)`;
           msg += `\nItem: ${manualEntry.itemName}`;
           if (manualEntry.packageSize) msg += `\nPackage: ${manualEntry.packageSize}`;
-          if (manualEntry.pricePerEA) msg += `\nPrice per EA: $${manualEntry.pricePerEA}`;
+          // Use price field or pricePerEA field from manual entry
+          const cachedPrice = manualEntry.price || manualEntry.pricePerEA;
+          if (cachedPrice) msg += `\nPrice per EA: $${cachedPrice}`;
           if (manualEntry.labeler_name) msg += `\nLabeler: ${manualEntry.labeler_name}`;
-          
-          // Create Form222 line from cached manual entry
-          const manualLine = createForm222Line(
+
+          // Create inventory line from cached manual entry
+          const manualLine = createInventoryLine(
             {
               brandName: manualEntry.itemName, // Use itemName as brandName
               genericName: "",
@@ -229,8 +267,9 @@ const ScanOut = () => {
               packageSize: manualEntry.packageSize,
               labeler_name: manualEntry.labeler_name
             },
-            manualEntry.pricePerEA ? {
-              nadac_per_unit: parseFloat(manualEntry.pricePerEA)
+            cachedPrice ? {
+              pricePerUnit: parseFloat(cachedPrice),
+              pricingUnit: 'EA'
             } : null,
             1, // Default package count to 1
             1  // Default total quantity ordered to 1
@@ -241,31 +280,88 @@ const ScanOut = () => {
           
           setEditLine(manualLine);
           setResult({ valid: true, message: msg });
+          setIsProcessing(false);
           return;
         }
         
-        // If no manual entry found, proceed with FDA/pricing lookup
-        // Batch the async operations
-        const [fdaResponse, priceResponse] = await Promise.allSettled([
-          ndcService.verify(norm.ndc11),
-          (async () => {
-            const fda = await ndcService.verify(norm.ndc11);
-            if (fda.ok) {
-              const fdaResult = fda.raw instanceof FDAResult ? fda.raw : new FDAResult(fda.raw);
-              return await fdaResult.getPrice(priceService, norm.ndc11);
-            }
-            return { ok: false, reason: "FDA verification failed" };
-          })()
-        ]);
+        // If no manual entry found, proceed with NDC normalization
+        const norm = ndcService.normalizeScan(barcode);
+        if (!norm.ok) {
+          setResult({ 
+            valid: false, 
+            message: norm.reason || "Unrecognized barcode format.", 
+            allowManualEntry: true  // Allow manual entry even for invalid barcodes
+          });
+          setEditLine(null);
+          setIsProcessing(false);
+          return;
+        }
+        
+        msg = `Valid NDC-11: ${norm.ndc11}`;
+        
+        // Proceed with FDA/pricing lookup for valid NDC
+        // Try all NDC candidates to find a match
+        let fda = { ok: false };
+        let price = { ok: false };
+        
+        const candidates = norm.ndc11_candidates || [norm.ndc11];
+        console.debug(`[ScanOut] 🔍 VERIFICATION LOOP START for input: ${barcode}`);
+        console.debug(`[ScanOut] Normalized NDC11: ${norm.ndc11}`);
+        console.debug(`[ScanOut] Will verify ${candidates.length} NDC-11 candidate(s): ${candidates.join(', ')}`);
+        
+        for (const ndc11Candidate of candidates) {
+          console.debug(`[ScanOut] 🧪 Trying candidate: ${ndc11Candidate} (from input: ${barcode})`);
+          
+          // Batch the async operations for this candidate
+          const [fdaResponse, priceResponse] = await Promise.allSettled([
+            ndcService.verify(ndc11Candidate),
+            (async () => {
+              const fdaResult = await ndcService.verify(ndc11Candidate);
+              if (fdaResult.ok) {
+                const fdaResultObj = fdaResult.raw instanceof FDAResult ? fdaResult.raw : new FDAResult(fdaResult.raw);
+                return await fdaResultObj.getPrice(priceService, ndc11Candidate);
+              }
+              return { ok: false, reason: "FDA verification failed" };
+            })()
+          ]);
+          
+          const candidateFda = fdaResponse.status === 'fulfilled' ? fdaResponse.value : { ok: false };
+          const candidatePrice = priceResponse.status === 'fulfilled' ? priceResponse.value : { ok: false };
+          
+          console.debug(`[ScanOut] 📊 FDA result for ${ndc11Candidate}:`, candidateFda.ok ? 'SUCCESS' : 'FAILED');
+          if (candidateFda.ok) {
+            console.debug(`[ScanOut] 📋 FDA data - NDC: ${candidateFda.ndc10}, Product: ${candidateFda.generic_name || candidateFda.brand_name}`);
+          }
+          
+          if (candidateFda.ok) {
+            // Found a match! Use this candidate
+            fda = candidateFda;
+            price = candidatePrice;
+            // Update norm.ndc11 to the correct candidate for subsequent code
+            norm.ndc11 = ndc11Candidate;
+            console.debug(`[ScanOut] ✅ Found match with candidate: ${ndc11Candidate} for input: ${barcode}`);
+            break;
+          } else {
+            console.debug(`[ScanOut] ❌ No match for candidate: ${ndc11Candidate}`);
+          }
+        }
+        
+        if (!fda.ok) {
+          console.debug(`[ScanOut] No FDA matches found after trying all ${candidates.length} candidates`);
+        }
         
         if (ignore) return;
-        
-        const fda = fdaResponse.status === 'fulfilled' ? fdaResponse.value : { ok: false };
-        const price = priceResponse.status === 'fulfilled' ? priceResponse.value : { ok: false };
         
         if (fda.ok) {
           const fdaResult = fda.raw instanceof FDAResult ? fda.raw : new FDAResult(fda.raw);
           msg += fdaResult.brand_name ? `\nFDA: ${fdaResult.brand_name} (${fdaResult.generic_name || ''})` : '';
+          
+          // Display DEA schedule if controlled substance
+          if (fdaResult.dea_schedule) {
+            const scheduleWarning = fdaResult.dea_schedule === 'CII' ? ' ⚠️ REQUIRES FORM 222' : '';
+            msg += `\nDEA Schedule: ${fdaResult.dea_schedule}${scheduleWarning}`;
+          }
+          
           const matchingPkg = fdaResult.findMatchingPackage(norm.ndc11);
           if (matchingPkg) {
             msg += `\nPackage: ${matchingPkg.description}`;
@@ -278,66 +374,110 @@ const ScanOut = () => {
           }
           
           const draft = fdaResult.buildLineDraftFromInput(norm.ndc11);
-          const nadacRow = price.ok ? price.row : null;
-          const formLine = createForm222Line(draft, nadacRow, 1, 1);
+          const nadacRow = price.ok ? {
+            pricePerUnit: price.pricePerUnit,
+            pricingUnit: price.pricingUnit
+          } : null;
+          const formLine = createInventoryLine(draft, nadacRow, 1, 1);
+          // Add DEA schedule to the line item
+          formLine.dea_schedule = fdaResult.dea_schedule || fda.dea_schedule || null;
+          // Mark as FDA verified item - this will lock NDC field from editing
+          formLine.hasFDAData = true;
           setEditLine(formLine);
         } else {
           msg += `\nFDA: Not found or not recognized.`;
           setEditLine(null);
         }
         setResult({ valid: true, message: msg, allowManualEntry: !fda.ok });
+        setIsProcessing(false);
       } catch (e) {
         if (!ignore) {
           msg += `\nError: ${e.message}`;
           setResult({ valid: false, message: msg, allowManualEntry: true }); // Allow manual entry on API errors with valid NDC/GTIN
           setEditLine(null);
+          setIsProcessing(false);
         }
       }
     };
 
     fetchData();
 
-    return () => { ignore = true; };
+    return () => { 
+      ignore = true; 
+      setIsProcessing(false);
+    };
   }, [barcode]);
 
-  return (
-    <Wrapper>
-      <h1 style={{ textAlign: "center" }}>Scan Barcode</h1>
-      
-      {!effectiveClientId && (
-        <Alert variant="warning" className="text-center mb-3">
-          <strong>No client selected.</strong> Please select a client from the main page first.
-          <div className="mt-2">
-            <Button variant="outline-primary" onClick={() => navigate('/')}>
-              Back to Client Selection
-            </Button>
-          </div>
-        </Alert>
-      )}
-      
-      {effectiveClientId && currentReport?.id && (
-        <Alert variant="info" className="text-center mb-3">
-          <strong>Adding items to existing report:</strong> {currentReport.id}
-        </Alert>
-      )}
-      
-      {effectiveClientId && sessionReport && !currentReport?.id && (
-        <Alert variant="success" className="text-center mb-3">
-          <strong>New session report created:</strong> {sessionReport.id}
-        </Alert>
-      )}
+  // useEffect for automatic price recalculation when editing fields
+  useEffect(() => {
+    const pricePerUnit = parseFloat(editLine?.pricePerUnit) || 0;
+    const unitsPerPackage = parseInt(editLine?.unitsPerPackage) || 1;
+    const packages = parseInt(editLine?.packages) || 1;
+    const currentPricePerPackage = editLine?.pricePerPackage || 0;
+    const currentTotalPrice = editLine?.totalPrice || 0;
 
-      {effectiveClientId && (
-        <>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+    if (pricePerUnit && unitsPerPackage && packages) {
+      const pricePerPackage = calculatePackagePrice(pricePerUnit, unitsPerPackage);
+      const totalPrice = calculateLineTotal(pricePerUnit, unitsPerPackage, packages);
+
+      // Only update if the calculated values are different to avoid infinite loops
+      if (currentPricePerPackage !== pricePerPackage || currentTotalPrice !== totalPrice) {
+        setEditLine(prev => ({
+          ...prev,
+          pricePerPackage,
+          totalPrice
+        }));
+      }
+    }
+  }, [editLine?.pricePerUnit, editLine?.unitsPerPackage, editLine?.packages, editLine?.pricePerPackage, editLine?.totalPrice]);
+
+  return (
+    <Wrapper centerText={false}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+        {error && (
+          <Alert variant="danger" className="text-center mb-3">
+            <strong>Camera Error:</strong> {error}
+          </Alert>
+        )}
+        
+        <h1 style={{ textAlign: "center" }}>Scan Barcode</h1>
+        
+        {!effectiveClientId && (
+          <Alert variant="warning" className="text-center mb-3">
+            <strong>No client selected.</strong> Please select a client from the main page first.
+            <div className="mt-2">
+              <Button variant="outline-primary" onClick={() => navigate('/')}>
+                Back to Client Selection
+              </Button>
+            </div>
+          </Alert>
+        )}
+        
+        {effectiveClientId && currentReport?.id && (
+          <Alert variant="info" className="text-center mb-3">
+            <strong>Adding items to existing report:</strong> {currentReport.id}
+          </Alert>
+        )}
+        
+        {effectiveClientId && sessionReport && !currentReport?.id && (
+          <Alert variant="success" className="text-center mb-3">
+            <strong>New session report created:</strong> {sessionReport.id}
+          </Alert>
+        )}
+
+        {effectiveClientId && (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
         <video
           id="scannerVideo"
           muted
           autoPlay
           playsInline
           style={{
-            width: 480,
-            height: 320,
+            width: "100%",
+            maxWidth: "480px",
+            height: "auto",
+            aspectRatio: "3/2",
             margin: "0 auto 12px auto",
             borderRadius: 12,
             overflow: "hidden",
@@ -347,19 +487,30 @@ const ScanOut = () => {
           }}
         />
 
-        <div style={{ marginBottom: 12 }}>
+        <div className="d-flex flex-wrap justify-content-center gap-2 mb-3" style={{ marginBottom: 12 }}>
           <Button
             variant="secondary"
             size="sm"
             onClick={() => control?.stop?.()}
             disabled={!isRunning || !control}
+            className="scan-control-btn"
           >
             Stop
-          </Button>{" "}
+          </Button>
+          <Button
+            variant="outline-warning"
+            size="sm"
+            onClick={clearScanState}
+            disabled={!barcode && !result}
+            className="scan-control-btn"
+          >
+            Clear Scan
+          </Button>
           <Button
             variant="outline-secondary"
             size="sm"
             onClick={() => window.location.reload()}
+            className="scan-control-btn"
           >
             Reset
           </Button>
@@ -379,11 +530,16 @@ const ScanOut = () => {
             type="text"
             placeholder="Scan or enter NDC-11"
             value={barcode}
-            onChange={(e) => setBarcode(e.target.value)}
+            onChange={(e) => {
+              console.log(`[ScanOut] 📝 Input onChange - Raw value: "${e.target.value}"`);
+              console.log(`[ScanOut] 📝 Input onChange - Previous barcode: "${barcode}"`);
+              setBarcode(e.target.value);
+            }}
             autoFocus
             style={{
-              width: 300,
-              padding: 8,
+              width: "100%",
+              maxWidth: "400px",
+              padding: 12,
               fontSize: 18,
               borderRadius: 6,
               border: "1px solid #ccc",
@@ -394,18 +550,19 @@ const ScanOut = () => {
         </form>
 
         {barcode && (
-          <Alert variant="dark" className="text-center" style={{ width: 320 }}>
+          <Alert variant="dark" className="text-center" style={{ width: "100%", maxWidth: "400px" }}>
             <Alert.Heading>Barcode</Alert.Heading>
             <p style={{ wordBreak: "break-all" }}>{barcode}</p>
           </Alert>
         )}
+        
 
 
         {result && (
           <Alert
             variant={result.valid ? "success" : "danger"}
             className="text-center"
-            style={{ width: 320, whiteSpace: 'pre-line' }}
+            style={{ width: "100%", maxWidth: "400px", whiteSpace: 'pre-line' }}
           >
             {result.message}
             {result.allowManualEntry && !showManualEntryModal && (
@@ -433,27 +590,185 @@ const ScanOut = () => {
 
 
         {editLine && (
-          <div style={{ width: 340, marginTop: 8 }}>
+          <div style={{ width: "100%", maxWidth: "400px", marginTop: 8 }}>
             <Alert variant="info" className="text-center">
-              <Alert.Heading>Edit Form 222 Line</Alert.Heading>
+              <Alert.Heading>Add Inventory Line</Alert.Heading>
               <form style={{ textAlign: 'left', fontSize: 13, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {Object.entries(editLine)
-                  .filter(([key]) => key !== 'lineNo')
-                  .map(([key, value]) => (
-                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <label htmlFor={`edit-${key}`} style={{ minWidth: 110 }}>{key}:</label>
-                      <input
-                        id={`edit-${key}`}
-                        type={typeof value === 'number' ? 'number' : 'text'}
-                        value={value ?? ''}
-                        onChange={e => {
-                          const v = typeof value === 'number' ? Number(e.target.value) : e.target.value;
-                          setEditLine(l => ({ ...l, [key]: v }));
-                        }}
-                        style={{ flex: 1, padding: 4, borderRadius: 4, border: '1px solid #ccc' }}
-                      />
-                    </div>
-                  ))}
+                  .filter(([key]) => key !== 'lineNo' && key !== 'packageUnit' && key !== 'hasFDAData')
+                  .map(([key, value]) => {
+                    // Map field names to user-friendly labels
+                    const fieldLabels = {
+                      packages: 'Quantity',
+                      packageSize: 'Package Size',
+                      itemName: 'Item Name',
+                      ndc11: 'NDC-11',
+                      labeler_name: 'Labeler',
+                      dea_schedule: 'DEA Schedule',
+                      pricePerUnit: 'Price per Unit',
+                      pricingUnit: 'Pricing Unit',
+                      unitsPerPackage: 'Units per Package',
+                      packageUnit: 'Package Unit',
+                      pricePerPackage: 'Price per Package',
+                      totalPrice: 'Total Price',
+                      isManualEntry: 'Manual Entry'
+                    };
+                    const label = fieldLabels[key] || key;
+                    
+                    // Special handling for pricePerUnit to show it's required when missing
+                    const isRequired = key === 'pricePerUnit' && (!value || value === 0);
+
+                    // Read-only fields that shouldn't be editable
+                    const readOnlyFields = ['pricingUnit', 'pricePerPackage', 'totalPrice'];
+                    // Lock NDC field if this item has FDA data
+                    if (key === 'ndc11' && editLine?.hasFDAData) {
+                      readOnlyFields.push('ndc11');
+                    }
+                    const isReadOnly = readOnlyFields.includes(key);
+
+                    // Special rendering for packageSize - split into two fields
+                    if (key === 'packageSize') {
+                      const parsed = parsePackageSize(value);
+                      const packageCount = parsed?.count || 1;
+                      const packageUnit = parsed?.unit || 'units';
+
+                      return (
+                        <div key={key}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <label htmlFor={`edit-${key}-count`} style={{ minWidth: 110 }}>
+                              Package Size *:
+                            </label>
+                            <input
+                              id={`edit-${key}-count`}
+                              type="number"
+                              value={packageCount}
+                              onChange={e => {
+                                const inputValue = e.target.value;
+                                const newCount = inputValue === '' ? '' : parseInt(inputValue) || 0;
+                                const newPackageSize = inputValue === '' ? '' : `${newCount || 1} ${packageUnit}`;
+                                setEditLine(l => ({
+                                  ...l,
+                                  packageSize: newPackageSize,
+                                  unitsPerPackage: newCount || 1,
+                                  packageUnit
+                                }));
+                              }}
+                              style={{
+                                flex: 1,
+                                padding: 4,
+                                borderRadius: 4,
+                                border: '1px solid #ccc'
+                              }}
+                              min="1"
+                            />
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                            <label htmlFor={`edit-${key}-unit`} style={{ minWidth: 110 }}>
+                              Package Unit *:
+                            </label>
+                            <input
+                              id={`edit-${key}-unit`}
+                              type="text"
+                              value={packageUnit}
+                              onChange={e => {
+                                const newUnit = e.target.value;
+                                const newPackageSize = newUnit === '' ? '' : `${packageCount || 1} ${newUnit || 'units'}`;
+                                setEditLine(l => ({
+                                  ...l,
+                                  packageSize: newPackageSize,
+                                  packageUnit: newUnit
+                                }));
+                              }}
+                              style={{
+                                flex: 1,
+                                padding: 4,
+                                borderRadius: 4,
+                                border: '1px solid #ccc'
+                              }}
+                              placeholder="tablets"
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={key}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <label htmlFor={`edit-${key}`} style={{ minWidth: 110 }}>
+                            {label}{isRequired && ' *'}:
+                          </label>
+                          <input
+                            id={`edit-${key}`}
+                            type={typeof value === 'number' ? 'number' : 'text'}
+                            value={value ?? ''}
+                            onChange={e => {
+                              if (!isReadOnly) {
+                                const v = typeof value === 'number' ? Number(e.target.value) : e.target.value;
+
+                                // Validate NDC field using centralized validation
+                                if (key === 'ndc11') {
+                                  const isManual = editLine?.isManualEntry;
+                                  let validation;
+                                  if (isManual || ndcService.utils.isCustomCode(v)) {
+                                    validation = ndcService.utils.validateManualCode(v);
+                                  } else {
+                                    validation = ndcService.utils.validateStandardNDC(v);
+                                  }
+
+                                  // Store validation result (could be used for styling)
+                                  setEditLine(l => ({
+                                    ...l,
+                                    [key]: v,
+                                    [`${key}_validation`]: validation
+                                  }));
+                                } else {
+                                  setEditLine(l => ({ ...l, [key]: v }));
+                                }
+                              }
+                            }}
+                            readOnly={isReadOnly}
+                            style={{
+                              flex: 1,
+                              padding: 4,
+                              borderRadius: 4,
+                              border: (() => {
+                                // Show validation error for NDC field
+                                if (key === 'ndc11' && editLine?.[`${key}_validation`] && !editLine[`${key}_validation`].isValid) {
+                                  return '2px solid #dc3545';
+                                }
+                                return isRequired ? '2px solid #ffc107' : '1px solid #ccc';
+                              })(),
+                              backgroundColor: (() => {
+                                if (key === 'ndc11' && editLine?.[`${key}_validation`] && !editLine[`${key}_validation`].isValid) {
+                                  return '#f8d7da';
+                                }
+                                return isRequired ? '#fff9e6' : isReadOnly ? '#f8f9fa' : 'white';
+                              })(),
+                              cursor: isReadOnly ? 'not-allowed' : 'text'
+                            }}
+                            placeholder={isRequired ? 'Enter price per unit' : ''}
+                          />
+                        </div>
+                        {/* Show validation error message for NDC field */}
+                        {key === 'ndc11' && editLine?.[`${key}_validation`] && !editLine[`${key}_validation`].isValid && (
+                          <div style={{
+                            fontSize: 12,
+                            color: '#dc3545',
+                            marginTop: 2
+                          }}>
+                            {editLine[`${key}_validation`].message}
+                          </div>
+                        )}
+                        {/* Show FDA lock message for NDC field */}
+                        {key === 'ndc11' && editLine?.hasFDAData && (
+                          <Form.Text className="text-muted" style={{ marginTop: 2 }}>
+                            🔒 NDC locked - FDA verified item
+                          </Form.Text>
+                        )}
+                      </div>
+                    );
+                  })}
               </form>
             </Alert>
             <form onSubmit={handleSubmit} style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -483,20 +798,14 @@ const ScanOut = () => {
             </form>
           </div>
         )}
-
-        {error && (
-          <Alert variant="warning" className="text-center" style={{ width: 320, marginTop: 8 }}>
-            {error}
-          </Alert>
+            
+            <CurrentItemsTable
+              selectedClient={selectedClient}
+            />
+            </div>
+          </>
         )}
       </div>
-
-      <CurrentItemsTable
-        currentReport={currentReport}
-        selectedClient={selectedClient}
-      />
-        </>
-      )}
     </Wrapper>
   );
 };

@@ -1,0 +1,19 @@
+[
+  {
+    "labeler_name": "Mallinckrodt Pharmaceuticals",
+    "return_instructions": "Contact Mallinckrodt Returns Department at 1-800-778-7898 for return authorization. All controlled substances must be pre-approved.",
+    "updatedAt": "2025-09-19T22:20:31.448Z"
+  },
+  {
+    "labeler_name": "Pfizer Inc",
+    "return_instructions": "Return through McKesson Pharmaceutical Returns Service or contact Pfizer Customer Service at 1-800-879-3477 for authorization."
+  },
+  {
+    "labeler_name": "Johnson & Johnson",
+    "return_instructions": "Use J&J Returns Portal online or contact customer service at 1-800-526-7736. Returns must be authorized within 90 days of expiration."
+  },
+  {
+    "labeler_name": "Sandoz Inc",
+    "return_instructions": "Returns must be pre-authorized. Call 1-800-525-8747 or email returns@sandoz.com for authorization."
+  }
+]

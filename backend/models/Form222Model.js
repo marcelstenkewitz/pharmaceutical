@@ -19,4 +19,37 @@ function createForm222Line(lineDraft, nadacRow, lineNo, packages = 1) {
   };
 }
 
-module.exports = { createForm222Line };
+/**
+ * Transform report items into Form 222 line items for PDF generation
+ * @param {Array} reportItems - Array of report items
+ * @returns {Array} Array of Form 222 line items ready for PDF generation
+ */
+function transformReportItemsToForm222Lines(reportItems) {
+  return reportItems.map((item, index) => ({
+    lineNo: index + 1,
+    ndc11: item.ndc || item.ndc11,
+    itemName: item.name || item.itemName || 'Unknown',
+    strength: item.strength || '',
+    packageSize: item.packageSize || item.package_size || '',
+    packages: item.quantity || item.packages || 1
+  }));
+}
+
+/**
+ * Filter and transform CII/CI items from a report for Form 222 generation
+ * @param {Array} reportItems - Array of report items
+ * @returns {Array} Array of CII/CI items formatted for Form 222
+ */
+function getCIIItemsForForm222(reportItems) {
+  const ciiItems = (reportItems || []).filter(item => 
+    item.dea_schedule === 'CII' || item.dea_schedule === 'CI'
+  );
+  
+  return transformReportItemsToForm222Lines(ciiItems);
+}
+
+module.exports = { 
+  createForm222Line, 
+  transformReportItemsToForm222Lines,
+  getCIIItemsForForm222 
+};

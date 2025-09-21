@@ -1,0 +1,79 @@
+[
+  {
+    "id": "o12fcgk97zb",
+    "name": "Sunrise Medical Center Test Edit",
+    "businessName": "Sunrise Medical Center Test Edit",
+    "deaNumber": "BJ1234567",
+    "streetAddress": "123 Medical Plaza Dr",
+    "city": "Los Angeles",
+    "state": "CA",
+    "zipCode": "90210",
+    "phoneNumber": "(555) 123-4567",
+    "reports": [
+      "16fbc4f1-77ef-492b-8352-3e383de6fa8e",
+      "f911c686-6757-48b4-a097-9ffd216b89e3"
+    ],
+    "updatedAt": "2025-09-19T21:47:31.195Z"
+  },
+  {
+    "id": "fcu0tukfic",
+    "name": "Dr. Michael Chen",
+    "businessName": "Pacific Coast Pharmacy",
+    "deaNumber": "BC9876543",
+    "streetAddress": "456 Harbor Blvd",
+    "city": "San Francisco",
+    "state": "CA",
+    "zipCode": "94102",
+    "phoneNumber": "(555) 987-6543",
+    "reports": [
+      "be80c9fd-f624-44f9-9cef-a80a349fdc9c",
+      "28f0021b-13d4-4414-bf47-f8e0ed168842"
+    ],
+    "updatedAt": "2025-09-19T22:03:05.791Z"
+  },
+  {
+    "id": "c98dvj966re",
+    "name": "Dr. Emily Rodriguez",
+    "businessName": "Central Valley Hospital",
+    "deaNumber": "BR5555555",
+    "streetAddress": "789 Valley Way",
+    "city": "Fresno",
+    "state": "CA",
+    "zipCode": "93720",
+    "phoneNumber": "(555) 555-5555",
+    "reports": [
+      "623a9a03-62f8-4e11-84eb-cf56a4e41c80"
+    ],
+    "updatedAt": "2025-09-20T19:21:04.891Z"
+  },
+  {
+    "businessName": "Test Pharmacy",
+    "deaNumber": "BT1234567",
+    "streetAddress": "123 Test St",
+    "city": "Test City",
+    "state": "CA",
+    "zipCode": "90212",
+    "phoneNumber": "(555) 888-7777",
+    "contactName": "Test User",
+    "id": "mfr86h6w31fych",
+    "name": "Test Pharmacy",
+    "reports": [],
+    "createdAt": "2025-09-19T19:21:11.048Z",
+    "updatedAt": "2025-09-20T19:28:56.311Z"
+  },
+  {
+    "businessName": "Test",
+    "deaNumber": "F34943949",
+    "streetAddress": "19319",
+    "city": "19131",
+    "state": "test",
+    "zipCode": "33186",
+    "phoneNumber": "7863381035",
+    "contactName": "John Doe",
+    "id": "mft1qpt6jzcxc5",
+    "name": "Test",
+    "reports": [],
+    "createdAt": "2025-09-21T01:56:30.378Z",
+    "updatedAt": "2025-09-21T01:56:30.378Z"
+  }
+]

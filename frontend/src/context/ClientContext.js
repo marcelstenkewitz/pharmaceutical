@@ -1,5 +1,5 @@
 import React, { createContext, useState, useMemo, useCallback, useEffect } from 'react';
-import apiService from '../Services/ApiService';
+import apiService from '../services/ApiService';
 
 export const ClientContext = createContext(null);
 
@@ -57,10 +57,10 @@ export const ClientProvider = ({ children }) => {
   const [clients, setClients] = useState(() => 
     loadFromStorage(STORAGE_KEYS.CLIENTS_CACHE, [])
   );
-  const [reports, setReports] = useState(() => 
+  const [reports, setReports] = useState(() =>
     loadFromStorage(STORAGE_KEYS.REPORTS_CACHE, [])
   );
-  
+
   // UI state (not persisted)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -175,8 +175,13 @@ export const ClientProvider = ({ children }) => {
     setError(null);
     try {
       const reportData = await apiService.getClientReports(clientId);
-      setReports(reportData);
-      return reportData;
+      // Use lineItems array directly - no more duplicate arrays
+      const mappedReports = reportData.map(report => ({
+        ...report,
+        lineItems: report.lineItems || []
+      }));
+      setReports(mappedReports);
+      return mappedReports;
     } catch (err) {
       setError(err.message);
       throw err;
@@ -193,7 +198,7 @@ export const ClientProvider = ({ children }) => {
       // Normalize structure: ensure items array exists
       const normalizedReport = {
         ...newReport,
-        items: newReport.lineItems || []
+        items: newReport.items || []
       };
       setCurrentReport(normalizedReport);
       setSessionReport(normalizedReport);
@@ -214,7 +219,7 @@ export const ClientProvider = ({ children }) => {
       
       // Update current report with new item, or set it if it wasn't set
       if (result && result.report) {
-        // Normalize the report structure (backend uses lineItems, frontend expects items)
+        // Normalize the report structure - backend returns items
         const normalizedReport = {
           ...result.report,
           items: result.report.lineItems || []
@@ -244,29 +249,49 @@ export const ClientProvider = ({ children }) => {
   }, [currentReport, sessionReport]);
 
   const updateLineItem = useCallback(async (clientId, reportId, lineItemId, updateData) => {
+    console.log('🚀 ClientContext.updateLineItem called with:', { clientId, reportId, lineItemId, updateData });
     setLoading(true);
     setError(null);
     try {
+      console.log('📡 Making API call to updateLineItem...');
       const updatedItem = await apiService.updateLineItem(clientId, reportId, lineItemId, updateData);
-      
-      // Update current report items
-      if (currentReport && currentReport.id === reportId) {
-        setCurrentReport(prev => ({
-          ...prev,
-          items: prev.items.map(item => 
+      console.log('📡 API call completed, got updatedItem:', updatedItem);
+
+      // Update current report items using callback to get latest state
+      setCurrentReport(prev => {
+        console.log('🔍 setCurrentReport callback - prev state:', prev);
+        console.log('🔍 Checking: prev exists?', !!prev, 'prev.id === reportId?', prev?.id === reportId, 'prev.items exists?', !!prev?.items);
+
+        // Only update if we have a current report and it matches the reportId
+        if (prev && prev.id === reportId && prev.items) {
+          console.log('🔄 Condition passed - Updating currentReport with new item:', updatedItem);
+          const newItems = prev.items.map(item =>
             item.id === lineItemId ? updatedItem : item
-          )
-        }));
-      }
-      
+          );
+          console.log('🔄 New items array:', newItems);
+
+          const newState = {
+            ...prev,
+            items: newItems
+          };
+          console.log('🔄 New currentReport state:', newState);
+          return newState;
+        } else {
+          console.log('❌ Condition failed - NOT updating currentReport. Prev ID:', prev?.id, 'Target ID:', reportId);
+          return prev;
+        }
+      });
+
+      console.log('✅ updateLineItem operation completed successfully');
       return updatedItem;
     } catch (err) {
+      console.error('❌ updateLineItem failed:', err);
       setError(err.message);
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [currentReport]);
+  }, []);
 
   const deleteLineItem = useCallback(async (clientId, reportId, lineItemId) => {
     setLoading(true);
@@ -310,14 +335,12 @@ export const ClientProvider = ({ children }) => {
     }
   }, [currentReport]);
 
+
   // --- UTILITY ACTIONS ---
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  const clearAllStorage = useCallback(() => {
-    Object.values(STORAGE_KEYS).forEach(key => clearStorage(key));
-  }, []);
 
   const resetSession = useCallback(() => {
     setCurrentReport(null);

@@ -1,10 +1,13 @@
 import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { ClientContext } from '../../context/ClientContext';
 import Wrapper from '../Layout/Wrapper';
-import { Alert, Card, Badge, Button, Modal } from 'react-bootstrap';
+import { Alert, Card, Badge, Button, Modal, Form, Row, Col } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
-import apiService from '../../Services/ApiService';
+import apiService from '../../services/ApiService';
 import GenerateForm222Button from './GenerateForm222Button';
+import GenerateInventoryButton from './GenerateInventoryButton';
+import ClientBadge from '../Common/ClientBadge';
+import ClientName from '../Common/ClientName';
 import './reports.css';
 
 const Reports = () => {
@@ -24,6 +27,9 @@ const Reports = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [reportToDelete, setReportToDelete] = useState(null);
   const [labelers, setLabelers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const navigate = useNavigate();
   const { clientId: urlClientId } = useParams();
 
@@ -105,6 +111,43 @@ const Reports = () => {
     });
   };
 
+  // Add original report numbers to preserve them after filtering
+  const reportsWithNumbers = reports.map((report, index) => ({
+    ...report,
+    originalReportNumber: index + 1
+  }));
+
+  // Filter reports based on search criteria
+  const filteredReports = reportsWithNumbers.filter(report => {
+    const reportDisplayNumber = String(report.originalReportNumber);
+    const reportId = String(report.id).toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+
+    // Check if search term is a pure number for exact report number matching
+    const isNumberSearch = /^\d+$/.test(searchTerm);
+
+    const matchesSearch = searchTerm === '' ||
+      (isNumberSearch
+        ? reportDisplayNumber === searchTerm
+        : (reportDisplayNumber.includes(searchTerm) || reportId.includes(searchLower))
+      );
+
+    const reportDate = new Date(report.createdAt);
+    const fromDateTime = fromDate ? new Date(fromDate) : null;
+    const toDateTime = toDate ? new Date(toDate + 'T23:59:59') : null;
+
+    const matchesDateRange = (!fromDateTime || reportDate >= fromDateTime) &&
+                           (!toDateTime || reportDate <= toDateTime);
+
+    return matchesSearch && matchesDateRange;
+  });
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFromDate('');
+    setToDate('');
+  };
+
   const handleViewReport = (report) => {
     setSelectedReport(report);
     setShowReportModal(true);
@@ -160,15 +203,13 @@ const Reports = () => {
   }
 
   return (
-    <Wrapper>
-      <div className="reports-container">
+    <Wrapper centerText={false}>
+      <div className="reports-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
         <div className="d-flex justify-content-between align-items-center mb-4 report-header">
-          <h1>Form 222 Reports</h1>
+          <h1>Inventory Reports</h1>
           <div className="d-flex gap-2 align-items-center">
             {clientInfo && (
-              <Badge bg="primary" className="report-badge me-2 fs-5 px-3 py-2">
-                {clientInfo.businessName || clientInfo.name}
-              </Badge>
+              <ClientBadge client={clientInfo} className="report-badge me-2 fs-5 px-3 py-2" />
             )}
             <Button 
               variant="success" 
@@ -179,53 +220,120 @@ const Reports = () => {
             </Button>
           </div>
         </div>
-        
+
+        {/* Search and Filter Section */}
+        <Card className="mb-4">
+          <Card.Header>
+            <h5 className="mb-0">Search Reports</h5>
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Search Reports</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Enter report ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={3}>
+                <Form.Group className="mb-3">
+                  <Form.Label>From Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={3}>
+                <Form.Group className="mb-3">
+                  <Form.Label>To Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={2} className="d-flex align-items-end">
+                <Button
+                  variant="outline-secondary"
+                  onClick={clearFilters}
+                  className="mb-3"
+                  disabled={!searchTerm && !fromDate && !toDate}
+                >
+                  Clear Filters
+                </Button>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+
         {reports.length === 0 ? (
           <Alert variant="info">No reports available for this client.</Alert>
         ) : (
           <div>
-            <Alert variant="success" className="mb-4">
-              Found {reports.length} report{reports.length !== 1 ? 's' : ''} for this client.
+            <Alert variant={filteredReports.length === 0 ? "warning" : "success"} className="mb-4">
+              {filteredReports.length === 0 ?
+                "No reports match your search criteria." :
+                `Found ${filteredReports.length} of ${reports.length} report${filteredReports.length !== 1 ? 's' : ''} for this client.`
+              }
             </Alert>
-            
-            {reports.map((report, reportIndex) => (
+
+            {filteredReports.map((report, reportIndex) => (
               <Card key={report.id} className="mb-4">
                 <Card.Header>
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
-                      <h5 className="mb-1">Report #{reportIndex + 1}</h5>
+                      <h5 className="mb-1">Report #{report.originalReportNumber}</h5>
                       <div className="report-meta text-muted small">
                         <strong>Created:</strong> {formatDate(report.createdAt)} | 
                         <strong> ID:</strong> {report.id} | 
                         <strong> Items:</strong> {report.lineItems?.length || 0}
                       </div>
                     </div>
-                    <div className="d-flex gap-2">
-                      <Button 
-                        variant="outline-success" 
+                    <div className="d-flex flex-wrap gap-3 justify-content-end report-action-buttons">
+                      <Button
+                        variant="outline-success"
                         size="sm"
                         onClick={() => handleAddItemsToReport(report)}
+                        className="report-btn"
                       >
                         Edit Items
                       </Button>
-                      <Button 
-                        variant="outline-primary" 
+                      <Button
+                        variant="outline-primary"
                         size="sm"
                         onClick={() => handleViewReport(report)}
+                        className="report-btn"
                       >
                         View Details
                       </Button>
-                      <GenerateForm222Button 
+                      <GenerateInventoryButton
                         clientId={clientId}
                         reportId={report.id}
                         report={report}
-                        variant="outline-info"
+                        variant="outline-success"
                         size="sm"
+                        className="report-btn"
                       />
-                      <Button 
-                        variant="outline-danger" 
+                      <GenerateForm222Button
+                        clientId={clientId}
+                        reportId={report.id}
+                        report={report}
+                        variant="outline-danger"
+                        size="sm"
+                        className="report-btn"
+                      />
+                      <Button
+                        variant="outline-danger"
                         size="sm"
                         onClick={() => handleDeleteReport(report)}
+                        className="report-btn"
                       >
                         Delete
                       </Button>
@@ -234,55 +342,162 @@ const Reports = () => {
                 </Card.Header>
                 <Card.Body>
                   {report.lineItems && report.lineItems.length > 0 ? (
-                    <div className="table-responsive">
-                      <table className="table table-striped table-hover mb-0">
-                        <thead className="table-dark">
-                          <tr>
-                            <th style={{ width: '6%' }}>Line #</th>
-                            <th style={{ width: '25%' }}>Item Name</th>
-                            <th style={{ width: '12%' }}>NDC-11</th>
-                            <th style={{ width: '15%' }}>Package Size</th>
-                            <th style={{ width: '8%' }}>Quantity</th>
-                            <th style={{ width: '12%' }}>Labeler</th>
-                            <th style={{ width: '22%' }}>Notes for Return</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {report.lineItems.map((item) => (
-                            <tr key={item.id}>
-                              <td className="fw-bold">{item.lineNo}</td>
-                              <td>
-                                <div className="text-truncate d-flex align-items-center" style={{ maxWidth: '300px' }} title={item.itemName}>
-                                  {item.itemName}
-                                  {item.isManualEntry && (
-                                    <span 
-                                      className="badge bg-warning text-dark ms-2" 
-                                      style={{ fontSize: '0.7em' }}
-                                      title="Manual Entry"
-                                    >
-                                      🔧 Manual
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td>
-                                <code className="small">{item.ndc11}</code>
-                              </td>
-                              <td>{item.packageSize}</td>
-                              <td className="text-center">
-                                <Badge bg="secondary">{item.packages}</Badge>
-                              </td>
-                              <td>{item.labeler_name || 'N/A'}</td>
-                              <td style={{ maxWidth: '200px', fontSize: '0.85em' }}>
-                                <div className="text-truncate" title={getReturnInstructions(item.labeler_name)}>
-                                  {getReturnInstructions(item.labeler_name)}
-                                </div>
-                              </td>
+                    <>
+                      {/* Desktop/Tablet Table View */}
+                      <div className="table-responsive">
+                        <table className="table table-striped table-hover mb-0">
+                          <thead className="table-dark">
+                            <tr>
+                              <th>Line #</th>
+                              <th>Item Name</th>
+                              <th>NDC-11</th>
+                              <th className="hide-mobile">Package Details</th>
+                              <th>Qty</th>
+                              <th>Pricing</th>
+                              <th>Total Price</th>
+                              <th>DEA</th>
+                              <th className="hide-mobile">Labeler</th>
+                              <th className="hide-mobile">Notes for Return</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            {report.lineItems.map((item) => (
+                              <tr key={item.id}>
+                                <td className="fw-bold">{item.lineNo}</td>
+                                <td>
+                                  <div className="text-truncate d-flex align-items-center" style={{ maxWidth: '300px' }} title={item.itemName}>
+                                    {item.itemName}
+                                    {item.isManualEntry && (
+                                      <span 
+                                        className="badge bg-warning text-dark ms-2" 
+                                        style={{ fontSize: '0.7em' }}
+                                        title="Manual Entry"
+                                      >
+                                        🔧 Manual
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td>
+                                  <code className="small">{item.ndc11}</code>
+                                </td>
+                                <td className="hide-mobile">
+                                  <div>
+                                    <strong className="text-primary">{item.packageSize}</strong>
+                                    {item.unitsPerPackage && (
+                                      <div className="small text-muted">
+                                        {item.unitsPerPackage} units/pkg
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="text-center">
+                                  <Badge bg="secondary">{item.packages}</Badge>
+                                </td>
+                                <td className="text-end">
+                                  <div>
+                                    <strong>${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'}</strong>
+                                    <small className="text-muted d-block">per {item.pricingUnit || 'unit'}</small>
+                                  </div>
+                                  <div className="mt-1">
+                                    <span className="text-info">${item.pricePerPackage ? item.pricePerPackage.toFixed(2) : '0.00'}</span>
+                                    <small className="text-muted d-block">per package</small>
+                                  </div>
+                                </td>
+                                <td className="text-end">
+                                  <strong className="text-success">${item.totalPrice ? item.totalPrice.toFixed(2) : '0.00'}</strong>
+                                </td>
+                                <td>
+                                  {item.dea_schedule ? (
+                                    <Badge 
+                                      bg={item.dea_schedule === 'CII' ? 'danger' : 
+                                          item.dea_schedule === 'CIII' ? 'warning' :
+                                          item.dea_schedule === 'CIV' || item.dea_schedule === 'CV' ? 'info' : 'secondary'}
+                                      title={item.dea_schedule === 'CII' ? 'Schedule II - Requires Form 222' : 
+                                             `Schedule ${item.dea_schedule.substring(1)} Controlled Substance`}
+                                    >
+                                      {item.dea_schedule}
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-muted">-</span>
+                                  )}
+                                </td>
+                                <td className="hide-mobile">{item.labeler_name || 'N/A'}</td>
+                                <td className="hide-mobile" style={{ maxWidth: '200px', fontSize: '0.85em' }}>
+                                  <div className="text-truncate" title={getReturnInstructions(item.labeler_name)}>
+                                    {getReturnInstructions(item.labeler_name)}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile Card View */}
+                      <div className="mobile-table-card">
+                        {report.lineItems.map((item) => (
+                          <div key={item.id} className="mobile-item-card">
+                            <div className="mobile-item-header">
+                              Line #{item.lineNo}: {item.itemName}
+                              {item.isManualEntry && (
+                                <span 
+                                  className="badge bg-warning text-dark ms-2" 
+                                  style={{ fontSize: '0.7em' }}
+                                >
+                                  🔧 Manual
+                                </span>
+                              )}
+                            </div>
+                            <div className="mobile-item-detail">
+                              <span className="mobile-item-label">NDC:</span>
+                              <code className="small">{item.ndc11}</code>
+                            </div>
+                            <div className="mobile-item-detail">
+                              <span className="mobile-item-label">Package:</span>
+                              <div>
+                                <strong className="text-primary">{item.packageSize}</strong>
+                                {item.unitsPerPackage && (
+                                  <div className="small text-muted">
+                                    {item.unitsPerPackage} units per package
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="mobile-item-detail">
+                              <span className="mobile-item-label">Quantity:</span>
+                              <Badge bg="secondary">{item.packages}</Badge>
+                            </div>
+                            <div className="mobile-item-detail">
+                              <span className="mobile-item-label">Price/Unit:</span>
+                              <span>${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'} per {item.pricingUnit || 'unit'}</span>
+                            </div>
+                            {item.dea_schedule && (
+                              <div className="mobile-item-detail">
+                                <span className="mobile-item-label">DEA Schedule:</span>
+                                <Badge 
+                                  bg={item.dea_schedule === 'CII' ? 'danger' : 
+                                      item.dea_schedule === 'CIII' ? 'warning' :
+                                      item.dea_schedule === 'CIV' || item.dea_schedule === 'CV' ? 'info' : 'secondary'}
+                                >
+                                  {item.dea_schedule}
+                                </Badge>
+                              </div>
+                            )}
+                            <div className="mobile-item-detail">
+                              <span className="mobile-item-label">Labeler:</span>
+                              <span>{item.labeler_name || 'N/A'}</span>
+                            </div>
+                            <div className="mobile-item-detail">
+                              <span className="mobile-item-label">Return Notes:</span>
+                              <span style={{ fontSize: '0.85em' }}>
+                                {getReturnInstructions(item.labeler_name)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
                   ) : (
                     <Alert variant="warning" className="mb-0">
                       This report has no line items yet. Click "Edit Items" to start scanning.
@@ -293,7 +508,7 @@ const Reports = () => {
             ))}
           </div>
         )}      {/* Report Details Modal */}
-      <Modal show={showReportModal} onHide={() => setShowReportModal(false)} size="lg">
+      <Modal show={showReportModal} onHide={() => setShowReportModal(false)} size="xl">
         <Modal.Header closeButton>
           <Modal.Title>Report Details - {selectedReport?.id}</Modal.Title>
         </Modal.Header>
@@ -302,19 +517,65 @@ const Reports = () => {
             <div>
               <Card className="mb-3">
                 <Card.Header>
-                  <h5 className="mb-0">Report Information</h5>
+                  <h5 className="mb-0">Report Overview</h5>
                 </Card.Header>
                 <Card.Body>
                   <div className="row">
                     <div className="col-md-6">
-                      <p><strong>Report ID:</strong> {selectedReport.id}</p>
+                      <p><strong>Report:</strong> #{selectedReport.originalReportNumber || reports.findIndex(r => r.id === selectedReport.id) + 1}</p>
+                      <p><strong>Report ID:</strong> <code className="small">{selectedReport.id}</code></p>
                       <p><strong>Created:</strong> {formatDate(selectedReport.createdAt)}</p>
+                      <p><strong>Total Line Items:</strong> <Badge bg="primary">{selectedReport.lineItems?.length || 0}</Badge></p>
                     </div>
                     <div className="col-md-6">
-                      <p><strong>Client:</strong> {clientInfo?.businessName || clientInfo?.name}</p>
-                      <p><strong>Total Line Items:</strong> {selectedReport.lineItems?.length || 0}</p>
+                      <p><strong>Client:</strong> <ClientName client={clientInfo} /></p>
+                      {clientInfo?.deaNumber && <p><strong>DEA Number:</strong> <code>{clientInfo.deaNumber}</code></p>}
+                      {clientInfo?.streetAddress && (
+                        <p><strong>Address:</strong> {clientInfo.streetAddress}, {clientInfo.city}, {clientInfo.state} {clientInfo.zipCode}</p>
+                      )}
+                      {clientInfo?.phoneNumber && <p><strong>Phone:</strong> {clientInfo.phoneNumber}</p>}
                     </div>
                   </div>
+                  
+                  {selectedReport.lineItems && selectedReport.lineItems.length > 0 && (
+                    <>
+                      <hr />
+                      <div className="row">
+                        <div className="col-md-3 col-6">
+                          <div className="text-center">
+                            <div className="h4 text-primary mb-0">
+                              {selectedReport.lineItems.reduce((sum, item) => sum + (item.packages || 0), 0)}
+                            </div>
+                            <small className="text-muted">Total Packages</small>
+                          </div>
+                        </div>
+                        <div className="col-md-3 col-6">
+                          <div className="text-center">
+                            <div className="h4 text-success mb-0">
+                              ${selectedReport.lineItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0).toFixed(2)}
+                            </div>
+                            <small className="text-muted">Total Value</small>
+                          </div>
+                        </div>
+                        <div className="col-md-3 col-6">
+                          <div className="text-center">
+                            <div className="h4 text-danger mb-0">
+                              {selectedReport.lineItems.filter(item => item.dea_schedule === 'CII' || item.dea_schedule === 'CI').length}
+                            </div>
+                            <small className="text-muted">Schedule I/II</small>
+                          </div>
+                        </div>
+                        <div className="col-md-3 col-6">
+                          <div className="text-center">
+                            <div className="h4 text-warning mb-0">
+                              {selectedReport.lineItems.filter(item => item.isManualEntry).length}
+                            </div>
+                            <small className="text-muted">Manual Entries</small>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </Card.Body>
               </Card>
               
@@ -324,15 +585,18 @@ const Reports = () => {
                     <h6 className="mb-0">Line Items</h6>
                   </Card.Header>
                   <Card.Body>
-                    <div className="table-responsive">
+                    {/* Desktop/Tablet Table View */}
+                    <div className="table-responsive d-none d-md-block">
                       <table className="table table-sm">
                         <thead>
                           <tr>
                             <th>Line #</th>
                             <th>Item Name</th>
                             <th>NDC-11</th>
-                            <th>Package Size</th>
+                            <th>Package Details</th>
                             <th>Quantity</th>
+                            <th>Price/Unit</th>
+                            <th>DEA</th>
                             <th>Labeler</th>
                             <th>Notes for Return</th>
                           </tr>
@@ -356,8 +620,33 @@ const Reports = () => {
                                 </div>
                               </td>
                               <td>{item.ndc11}</td>
-                              <td>{item.packageSize}</td>
+                              <td>
+                                <div>
+                                  <strong className="text-primary">{item.packageSize}</strong>
+                                  {item.unitsPerPackage && (
+                                    <div className="small text-muted">
+                                      {item.unitsPerPackage} units/pkg
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
                               <td>{item.packages}</td>
+                              <td className="text-end">${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'}</td>
+                              <td>
+                                {item.dea_schedule ? (
+                                  <Badge 
+                                    bg={item.dea_schedule === 'CII' ? 'danger' : 
+                                        item.dea_schedule === 'CIII' ? 'warning' :
+                                        item.dea_schedule === 'CIV' || item.dea_schedule === 'CV' ? 'info' : 'secondary'}
+                                    title={item.dea_schedule === 'CII' ? 'Schedule II - Requires Form 222' : 
+                                           `Schedule ${item.dea_schedule.substring(1)} Controlled Substance`}
+                                  >
+                                    {item.dea_schedule}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted">-</span>
+                                )}
+                              </td>
                               <td>{item.labeler_name || 'N/A'}</td>
                               <td style={{ fontSize: '0.85em', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
                                 {getReturnInstructions(item.labeler_name)}
@@ -367,6 +656,59 @@ const Reports = () => {
                         </tbody>
                       </table>
                     </div>
+
+                    {/* Mobile Card View */}
+                    <div className="d-md-none">
+                      {selectedReport.lineItems.map((item) => (
+                        <div key={item.id} className="border rounded p-3 mb-3 bg-light">
+                          <div className="mb-2">
+                            <strong>Line #{item.lineNo}: </strong>
+                            <span>{item.itemName}</span>
+                            {item.isManualEntry && (
+                              <span 
+                                className="badge bg-warning text-dark ms-2" 
+                                style={{ fontSize: '0.7em' }}
+                                title="Manual Entry"
+                              >
+                                🔧 Manual
+                              </span>
+                            )}
+                          </div>
+                          <div className="small">
+                            <div className="mb-1"><strong>NDC:</strong> <code>{item.ndc11}</code></div>
+                            <div className="mb-1">
+                              <strong>Package:</strong>
+                              <div>
+                                <strong className="text-primary">{item.packageSize}</strong>
+                                {item.unitsPerPackage && (
+                                  <div className="small text-muted">
+                                    {item.unitsPerPackage} units per package
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="mb-1"><strong>Quantity:</strong> {item.packages}</div>
+                            <div className="mb-1"><strong>Price/Unit:</strong> ${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'} per {item.pricingUnit || 'unit'}</div>
+                            <div className="mb-1">
+                              <strong>DEA Schedule:</strong> {item.dea_schedule ? (
+                                <Badge 
+                                  bg={item.dea_schedule === 'CII' ? 'danger' : 
+                                      item.dea_schedule === 'CIII' ? 'warning' :
+                                      item.dea_schedule === 'CIV' || item.dea_schedule === 'CV' ? 'info' : 'secondary'}
+                                  className="ms-1"
+                                >
+                                  {item.dea_schedule}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted">Not Controlled</span>
+                              )}
+                            </div>
+                            <div className="mb-1"><strong>Labeler:</strong> {item.labeler_name || 'N/A'}</div>
+                            <div><strong>Return Notes:</strong> {getReturnInstructions(item.labeler_name)}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </Card.Body>
                 </Card>
               )}
@@ -374,19 +716,62 @@ const Reports = () => {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <div className="d-flex justify-content-between w-100">
-            <div>
+          <div className="d-flex justify-content-between w-100 flex-wrap gap-3 modal-footer-buttons">
+            <div className="d-flex gap-3 flex-wrap">
               {selectedReport && (
-                <GenerateForm222Button 
-                  clientId={clientId}
-                  reportId={selectedReport.id}
-                  report={{ ...selectedReport, client: clientInfo }}
-                  variant="outline-info"
-                  size="sm"
-                />
+                <>
+                  <Button
+                    variant="outline-success"
+                    size="sm"
+                    onClick={() => {
+                      setShowReportModal(false);
+                      handleAddItemsToReport(selectedReport);
+                    }}
+                    className="modal-action-btn"
+                  >
+                    Edit Items
+                  </Button>
+                  {selectedReport.lineItems && selectedReport.lineItems.length > 0 && (
+                    <>
+                      <GenerateInventoryButton
+                        clientId={clientId}
+                        reportId={selectedReport.id}
+                        report={selectedReport}
+                        variant="outline-success"
+                        size="sm"
+                        className="modal-action-btn"
+                      />
+                      {selectedReport.lineItems.some(item => item.dea_schedule === 'CI' || item.dea_schedule === 'CII') && (
+                        <GenerateForm222Button
+                          clientId={clientId}
+                          reportId={selectedReport.id}
+                          report={{ ...selectedReport, client: clientInfo }}
+                          variant="outline-danger"
+                          size="sm"
+                          className="modal-action-btn"
+                        />
+                      )}
+                    </>
+                  )}
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => {
+                      setShowReportModal(false);
+                      handleDeleteReport(selectedReport);
+                    }}
+                    className="modal-action-btn"
+                  >
+                    Delete Report
+                  </Button>
+                </>
               )}
             </div>
-            <Button variant="secondary" onClick={() => setShowReportModal(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowReportModal(false)}
+              className="modal-close-btn"
+            >
               Close
             </Button>
           </div>
@@ -394,7 +779,7 @@ const Reports = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal show={showDeleteModal} onHide={cancelDeleteReport} centered>
+      <Modal show={showDeleteModal} onHide={cancelDeleteReport}>
         <Modal.Header closeButton>
           <Modal.Title>Confirm Delete Report</Modal.Title>
         </Modal.Header>

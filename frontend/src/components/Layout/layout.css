@@ -38,8 +38,26 @@
   box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
+/* Mobile-first responsive design */
+@media (max-width: 576px) {
+  .header-container {
+    padding: 12px;
+    margin: 8px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .website-header {
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .header-container:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 12px rgba(0, 123, 255, 0.15);
+  }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
   .header-container {
     padding: 15px;
     margin: 10px;
@@ -52,11 +70,12 @@
 
 @media (max-width: 480px) {
   .website-header {
-    font-size: 1.25rem;
-    letter-spacing: 0.5px;
+    font-size: 1.1rem;
+    letter-spacing: 0.3px;
   }
   
   .header-container {
-    padding: 12px;
+    padding: 10px;
+    margin: 5px;
   }
 }
