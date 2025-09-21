@@ -511,7 +511,7 @@ async function generateInventoryPDF(reportData) {
     yPosition -= 20;
     
     // Table header row
-    const headers = ['#', 'Item Name', 'NDC', 'Package', 'Qty', 'Price/EA', 'Total', 'DEA'];
+    const headers = ['#', 'Item Name', 'NDC', 'Package', 'Qty', '$/Unit', 'Total', 'DEA'];
     const xPositions = [50, 70, 220, 300, 360, 400, 460, 510];
     
     headers.forEach((header, index) => {

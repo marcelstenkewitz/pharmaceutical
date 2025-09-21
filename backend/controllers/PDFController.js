@@ -121,10 +121,12 @@ class PDFController extends BaseController {
           ndc11: item.ndc11 || item.ndc,
           packageSize: item.packageSize,
           packages: item.packages,
+          unitsPerPackage: item.unitsPerPackage || 1,
           pricePerUnit: item.pricePerUnit || 0,
           pricePerPackage: item.pricePerPackage || 0,
           totalPrice: item.totalPrice || 0,
-          labeler_name: item.labeler_name || ''
+          labeler_name: item.labeler_name || '',
+          dea_schedule: item.dea_schedule || ''
         }))
       };
 
