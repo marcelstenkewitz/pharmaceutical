@@ -44,12 +44,11 @@ const Scanning = () => {
   const [editDeaValidationError, setEditDeaValidationError] = useState("");
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  // Load clients on component mount and clear any persisted selection
+  // Load clients on component mount
   useEffect(() => {
-    // Clear any persisted client selection on mount
-    setSelectedClient(null);
+    // Load clients without clearing the persisted selection
     loadClients().catch(console.error);
-  }, [loadClients, setSelectedClient]);
+  }, [loadClients]);
 
   const handleClientSelection = async (clientId) => {
     setLocalSelectedClient(clientId);
