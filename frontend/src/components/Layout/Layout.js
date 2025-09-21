@@ -1,14 +1,21 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { Stack } from "react-bootstrap";
 import { Outlet, useNavigate } from 'react-router-dom';
+import { ClientContext } from "../../context/ClientContext";
 import "./layout.css"
 
 const Layout = () => {
   const navigate = useNavigate();
+  const { selectedClient } = useContext(ClientContext);
 
   const handleHeaderClick = () => {
-    // Always navigate to main page - ClientContext is preserved via localStorage
-    navigate('/');
+    // Navigate with client ID in URL to preserve context on mobile
+    if (selectedClient) {
+      const clientId = typeof selectedClient === 'object' ? selectedClient.id : selectedClient;
+      navigate(`/scanning/client/${clientId}`);
+    } else {
+      navigate('/');
+    }
   };
   
   console.log(window.innerWidth)
