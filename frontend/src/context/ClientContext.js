@@ -195,10 +195,10 @@ export const ClientProvider = ({ children }) => {
     setError(null);
     try {
       const newReport = await apiService.createNewReport(clientId);
-      // Normalize structure: ensure items array exists
+      // Normalize structure: use lineItems consistently
       const normalizedReport = {
         ...newReport,
-        items: newReport.items || []
+        items: newReport.lineItems || newReport.items || []
       };
       setCurrentReport(normalizedReport);
       setSessionReport(normalizedReport);
@@ -219,14 +219,14 @@ export const ClientProvider = ({ children }) => {
       
       // Update current report with new item, or set it if it wasn't set
       if (result && result.report) {
-        // Normalize the report structure - backend returns items
+        // Normalize the report structure - backend returns lineItems
         const normalizedReport = {
           ...result.report,
-          items: result.report.lineItems || []
+          items: result.report.lineItems || result.report.items || []
         };
-        
+
         setCurrentReport(normalizedReport);
-        
+
         // Also update session report if this is the active session
         if (sessionReport && sessionReport.id === result.report.id) {
           setSessionReport(normalizedReport);
