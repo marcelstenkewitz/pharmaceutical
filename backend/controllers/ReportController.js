@@ -284,6 +284,13 @@ class ReportController extends BaseController {
       const allReports = this.repos.reports.findAll();
       const clientReports = allReports.filter(report => report.clientId === clientId);
 
+      // Sort reports by createdAt date in descending order (newest first)
+      clientReports.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.timestamp || 0);
+        const dateB = new Date(b.createdAt || b.timestamp || 0);
+        return dateB - dateA; // Descending order
+      });
+
       return this.handleSuccess({ reports: clientReports }, 'fetch client reports');
     } catch (error) {
       return this.handleError(error, 'fetch client reports');
