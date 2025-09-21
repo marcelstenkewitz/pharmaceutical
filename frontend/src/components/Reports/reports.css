@@ -1,6 +1,7 @@
 .reports-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 0 20px;
 }
 
 .report-item {
@@ -80,6 +81,45 @@
   padding: 0.4em 0.8em;
 }
 
+/* Manual entry badge styling */
+.manual-entry-badge {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+  font-size: 0.7em;
+  font-weight: 700;
+  line-height: 1;
+  color: #212529;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+  background-color: #ffc107;
+  margin-left: 0.5rem;
+}
+
+/* Item name with truncation */
+.item-name-truncate {
+  max-width: 300px;
+}
+
+/* Return instructions column styling */
+.return-instructions-column {
+  max-width: 200px;
+  font-size: 0.85em;
+}
+
+/* Return instructions text styling */
+.return-instructions-text {
+  font-size: 0.85em;
+}
+
+/* Return instructions modal styling */
+.return-instructions-modal {
+  font-size: 0.85em;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
 /* Report action button styling */
 .report-btn {
   min-width: 90px;
@@ -122,18 +162,28 @@
   .reports-container {
     padding: 0 10px;
   }
-  
+
   /* Stack report header elements on mobile */
   .report-header {
     flex-direction: column;
     align-items: flex-start !important;
     gap: 10px;
   }
-  
+
   .report-header .d-flex {
     flex-direction: column;
     align-items: flex-start;
     width: 100%;
+  }
+
+  /* Statistics section mobile improvements */
+  .schedule-text {
+    font-size: 0.7rem !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    line-height: 1.2;
   }
   
   /* Mobile table cards instead of traditional table */

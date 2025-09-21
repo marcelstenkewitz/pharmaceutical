@@ -1,0 +1,253 @@
+/* ScanOut Component Styles */
+
+/* Main container */
+.scan-out-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Page header */
+.scan-out-header {
+  text-align: center;
+}
+
+/* Camera controls container */
+.camera-controls-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Video player styles */
+.scan-video-player {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  aspect-ratio: 3/2;
+  margin: 0 auto 12px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.133);
+  background: #000;
+  object-fit: cover;
+}
+
+/* Control buttons container */
+.scan-control-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 12px;
+}
+
+/* Alert container */
+.scan-alert-container {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* Barcode display */
+.barcode-display {
+  word-break: break-all;
+}
+
+/* Error alert container */
+.error-alert-container {
+  width: 100%;
+  max-width: 400px;
+  white-space: pre-line;
+}
+
+/* Error details */
+.error-details {
+  margin-top: 12px;
+}
+
+/* Manual entry container */
+.manual-entry-container {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 8px;
+}
+
+/* Manual entry form */
+.manual-entry-form {
+  text-align: left;
+  font-size: 13px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Form field row */
+.form-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-field-row-with-margin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Form labels */
+.form-label-fixed {
+  min-width: 110px;
+}
+
+/* Input styles */
+.scan-input-flex {
+  flex: 1;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.scan-input-fixed {
+  width: 80px;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.scan-input-standard {
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+/* Input with validation states */
+.scan-input-required {
+  flex: 1;
+  padding: 4px;
+  border-radius: 4px;
+  border: 2px solid #ffc107;
+  background-color: #fff9e6;
+  cursor: text;
+}
+
+.scan-input-optional {
+  flex: 1;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
+  cursor: text;
+}
+
+.scan-input-readonly {
+  flex: 1;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.scan-input-error {
+  flex: 1;
+  padding: 4px;
+  border-radius: 4px;
+  border: 2px solid #dc3545;
+  background-color: #f8d7da;
+  cursor: text;
+}
+
+/* Package size container */
+.package-size-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Package size validation */
+.package-size-validation {
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.package-size-validation-success {
+  background-color: #d1e7dd;
+  border: 1px solid #a3cfbb;
+  color: #0f5132;
+}
+
+.package-size-validation-error {
+  background-color: #f8d7da;
+  border: 1px solid #f1aeb5;
+  color: #721c24;
+}
+
+/* Form text */
+.form-text-spacing {
+  margin-top: 2px;
+}
+
+/* Main form */
+.main-form {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Submit button container */
+.submit-button-container {
+  margin-top: 4px;
+}
+
+/* Alert styles */
+.alert-spacing-top {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* Camera control styles */
+.camera-icon-enabled {
+  color: #4BB543;
+  cursor: pointer;
+}
+
+.camera-icon-disabled {
+  color: #dc3545;
+  cursor: pointer;
+}
+
+/* Barcode input form */
+.barcode-input-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+/* Barcode input field */
+.barcode-input-field {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px;
+  font-size: 18px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* Validation error message */
+.validation-error-message {
+  font-size: 12px;
+  color: #dc3545;
+  margin-top: 2px;
+}

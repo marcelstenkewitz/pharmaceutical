@@ -4,6 +4,7 @@ import ManualEntryModal from '../Scanning/ManualEntryModal';
 import apiService from '../../services/ApiService';
 import ManualEntryService from '../../services/ManualEntryService';
 import DataTable from '../Common/DataTable/DataTable';
+import './manual-entries.css';
 
 const ManualEntries = () => {
   const formatDate = (dateString) => {
@@ -87,7 +88,7 @@ const ManualEntries = () => {
         key: 'return_instructions',
         label: 'Return Instructions',
         render: ([barcode, entry]) => (
-          <div style={{ maxWidth: '200px', fontSize: '0.85em' }}>
+          <div className="manual-entry-return-instructions">
             {entry.return_instructions || 'Contact manufacturer for return instructions'}
           </div>
         )

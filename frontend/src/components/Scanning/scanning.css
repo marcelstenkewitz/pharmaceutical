@@ -104,6 +104,8 @@
 
 /* Scanning page specific styling */
 .scanning-container {
+    max-width: 600px;
+    margin: 0 auto;
     padding: 0 15px;
 }
 
@@ -132,6 +134,8 @@
     border-radius: 15px;
     transition: all 0.3s ease;
     cursor: pointer;
+    width: clamp(120px, 25vw, 200px);
+    height: clamp(120px, 25vw, 200px);
 }
 
 .action-icon:hover {
@@ -141,6 +145,16 @@
 
 .action-icon:active {
     transform: scale(0.98);
+}
+
+.action-icon-disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.action-icon-enabled {
+    cursor: pointer;
+    opacity: 1;
 }
 
 /* Mobile-first responsive design */

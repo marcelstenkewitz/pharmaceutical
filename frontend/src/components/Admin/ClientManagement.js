@@ -5,6 +5,7 @@ import { ClientContext } from '../../context/ClientContext';
 import { validateDEANumber } from '../../utils/deaValidator';
 import ClientDisplay from '../Common/ClientDisplay';
 import DataTable from '../Common/DataTable/DataTable';
+import './client-management.css';
 
 const ClientManagement = () => {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ const ClientManagement = () => {
           <div>
             <strong>{client.labelerName || 'N/A'}</strong>
             {client.returnInstructions && (
-              <div className="text-muted small" style={{ maxWidth: '200px' }}>
+              <div className="return-instructions-preview">
                 {client.returnInstructions.substring(0, 50)}
                 {client.returnInstructions.length > 50 ? '...' : ''}
               </div>

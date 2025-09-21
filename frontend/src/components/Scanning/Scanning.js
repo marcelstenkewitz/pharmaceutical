@@ -223,7 +223,7 @@ const Scanning = () => {
 
   return (
     <Wrapper centerText={true}>
-      <div className="scanning-container" style={{ maxWidth: '600px', margin: '0 auto' }}>
+      <div className="scanning-container">
         {error &&
           <Alert variant="danger" className="text-center mb-3">
             <Alert.Heading>Oh snap! You got an error!</Alert.Heading>
@@ -272,14 +272,8 @@ const Scanning = () => {
           <h2>Create a New Report</h2>
           <ArrowUpSquareFill
             onClick={handleCreateNewReport}
-            className="check-btn p-2 mobile-icon action-icon"
+            className={`check-btn p-2 mobile-icon action-icon ${(!localSelectedClient && !selectedClient) ? 'action-icon-disabled' : 'action-icon-enabled'}`}
             size={200}
-            style={{
-              cursor: (!localSelectedClient && !selectedClient) ? 'not-allowed' : 'pointer',
-              opacity: (!localSelectedClient && !selectedClient) ? 0.5 : 1,
-              width: 'clamp(120px, 25vw, 200px)',
-              height: 'clamp(120px, 25vw, 200px)'
-            }}
           />
           {(!localSelectedClient && !selectedClient) && (
             <p className="text-muted mt-2">Please select a client first</p>
@@ -289,14 +283,8 @@ const Scanning = () => {
           <h2>View Reports</h2>
           <BarChartFill
             onClick={handleViewReports}
-            className="check-btn p-2 mobile-icon action-icon"
+            className={`check-btn p-2 mobile-icon action-icon ${(!localSelectedClient && !selectedClient) ? 'action-icon-disabled' : 'action-icon-enabled'}`}
             size={200}
-            style={{
-              cursor: (!localSelectedClient && !selectedClient) ? 'not-allowed' : 'pointer',
-              opacity: (!localSelectedClient && !selectedClient) ? 0.5 : 1,
-              width: 'clamp(120px, 25vw, 200px)',
-              height: 'clamp(120px, 25vw, 200px)'
-            }}
           />
           {(!localSelectedClient && !selectedClient) && (
             <p className="text-muted mt-2">Please select a client first</p>

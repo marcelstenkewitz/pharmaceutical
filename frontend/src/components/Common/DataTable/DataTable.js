@@ -4,6 +4,7 @@ import { PencilSquare, Trash, Plus } from 'react-bootstrap-icons';
 import Wrapper from '../../Layout/Wrapper';
 import FormModal from './FormModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import './data-table.css';
 
 const DataTable = ({
   title,
@@ -254,7 +255,6 @@ const DataTable = ({
                     <tr
                       key={Array.isArray(item) ? item[0] : (item[itemIdField] || index)}
                       onClick={onRowClick ? () => onRowClick(item) : undefined}
-                      style={onRowClick ? { cursor: 'pointer' } : {}}
                       className={onRowClick ? 'table-row-clickable' : ''}
                     >
                       {columns.map((column, colIndex) => (

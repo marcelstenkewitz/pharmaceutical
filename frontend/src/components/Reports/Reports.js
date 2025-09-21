@@ -204,7 +204,7 @@ const Reports = () => {
 
   return (
     <Wrapper centerText={false}>
-      <div className="reports-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+      <div className="reports-container">
         <div className="d-flex justify-content-between align-items-center mb-4 report-header">
           <h1>Inventory Reports</h1>
           <div className="d-flex gap-2 align-items-center">
@@ -365,12 +365,11 @@ const Reports = () => {
                               <tr key={item.id}>
                                 <td className="fw-bold">{item.lineNo}</td>
                                 <td>
-                                  <div className="text-truncate d-flex align-items-center" style={{ maxWidth: '300px' }} title={item.itemName}>
+                                  <div className="text-truncate d-flex align-items-center item-name-truncate" title={item.itemName}>
                                     {item.itemName}
                                     {item.isManualEntry && (
-                                      <span 
-                                        className="badge bg-warning text-dark ms-2" 
-                                        style={{ fontSize: '0.7em' }}
+                                      <span
+                                        className="manual-entry-badge"
                                         title="Manual Entry"
                                       >
                                         🔧 Manual
@@ -423,7 +422,7 @@ const Reports = () => {
                                   )}
                                 </td>
                                 <td className="hide-mobile">{item.labeler_name || 'N/A'}</td>
-                                <td className="hide-mobile" style={{ maxWidth: '200px', fontSize: '0.85em' }}>
+                                <td className="hide-mobile return-instructions-column">
                                   <div className="text-truncate" title={getReturnInstructions(item.labeler_name)}>
                                     {getReturnInstructions(item.labeler_name)}
                                   </div>
@@ -441,9 +440,8 @@ const Reports = () => {
                             <div className="mobile-item-header">
                               Line #{item.lineNo}: {item.itemName}
                               {item.isManualEntry && (
-                                <span 
-                                  className="badge bg-warning text-dark ms-2" 
-                                  style={{ fontSize: '0.7em' }}
+                                <span
+                                  className="manual-entry-badge"
                                 >
                                   🔧 Manual
                                 </span>
@@ -490,7 +488,7 @@ const Reports = () => {
                             </div>
                             <div className="mobile-item-detail">
                               <span className="mobile-item-label">Return Notes:</span>
-                              <span style={{ fontSize: '0.85em' }}>
+                              <span className="return-instructions-text">
                                 {getReturnInstructions(item.labeler_name)}
                               </span>
                             </div>
@@ -562,7 +560,10 @@ const Reports = () => {
                             <div className="h4 text-danger mb-0">
                               {selectedReport.lineItems.filter(item => item.dea_schedule === 'CII' || item.dea_schedule === 'CI').length}
                             </div>
-                            <small className="text-muted">Schedule I/II</small>
+                            <small className="text-muted schedule-text">
+                              <span className="d-none d-md-inline">Schedule I/II</span>
+                              <span className="d-md-none">CI/CII</span>
+                            </small>
                           </div>
                         </div>
                         <div className="col-md-3 col-6">
@@ -609,9 +610,8 @@ const Reports = () => {
                                 <div className="d-flex align-items-center">
                                   {item.itemName}
                                   {item.isManualEntry && (
-                                    <span 
-                                      className="badge bg-warning text-dark ms-2" 
-                                      style={{ fontSize: '0.7em' }}
+                                    <span
+                                      className="manual-entry-badge"
                                       title="Manual Entry"
                                     >
                                       🔧 Manual
@@ -648,7 +648,7 @@ const Reports = () => {
                                 )}
                               </td>
                               <td>{item.labeler_name || 'N/A'}</td>
-                              <td style={{ fontSize: '0.85em', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
+                              <td className="return-instructions-modal">
                                 {getReturnInstructions(item.labeler_name)}
                               </td>
                             </tr>
@@ -665,9 +665,8 @@ const Reports = () => {
                             <strong>Line #{item.lineNo}: </strong>
                             <span>{item.itemName}</span>
                             {item.isManualEntry && (
-                              <span 
-                                className="badge bg-warning text-dark ms-2" 
-                                style={{ fontSize: '0.7em' }}
+                              <span
+                                className="badge bg-warning text-dark ms-2 manual-entry-badge"
                                 title="Manual Entry"
                               >
                                 🔧 Manual

@@ -1,6 +1,7 @@
 import React from 'react';
 import apiService from '../../services/ApiService';
 import DataTable from '../Common/DataTable/DataTable';
+import './labelers-management.css';
 
 const LabelersManagement = () => {
   // DataTable configuration
@@ -17,7 +18,7 @@ const LabelersManagement = () => {
         key: 'return_instructions',
         label: 'Return Instructions',
         render: (labeler) => (
-          <div className="text-wrap" style={{ maxWidth: '400px' }}>
+          <div className="labeler-return-instructions">
             {labeler.return_instructions}
           </div>
         )

@@ -13,6 +13,7 @@ import { calculateLineTotal, calculatePackagePrice, parsePackageSize } from "../
 import CurrentItemsTable from "./CurrentItemsTable";
 import ManualEntryModal from "./ManualEntryModal";
 import apiService from "../../services/ApiService";
+import './scan-out.css';
 import "./scanning.css";
 
 const ndcService = createNdcService();
@@ -433,14 +434,14 @@ const ScanOut = () => {
 
   return (
     <Wrapper centerText={false}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+      <div className="scan-out-container">
         {error && (
           <Alert variant="danger" className="text-center mb-3">
             <strong>Camera Error:</strong> {error}
           </Alert>
         )}
         
-        <h1 style={{ textAlign: "center" }}>Scan Barcode</h1>
+        <h1 className="scan-out-header">Scan Barcode</h1>
         
         {!effectiveClientId && (
           <Alert variant="warning" className="text-center mb-3">
@@ -467,27 +468,16 @@ const ScanOut = () => {
 
         {effectiveClientId && (
           <>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+            <div className="camera-controls-container">
         <video
           id="scannerVideo"
           muted
           autoPlay
           playsInline
-          style={{
-            width: "100%",
-            maxWidth: "480px",
-            height: "auto",
-            aspectRatio: "3/2",
-            margin: "0 auto 12px auto",
-            borderRadius: 12,
-            overflow: "hidden",
-            boxShadow: "0 2px 12px #0002",
-            background: "#000",
-            objectFit: "cover",
-          }}
+          className="scan-video-player"
         />
 
-        <div className="d-flex flex-wrap justify-content-center gap-2 mb-3" style={{ marginBottom: 12 }}>
+        <div className="scan-control-buttons">
           <Button
             variant="secondary"
             size="sm"
@@ -518,13 +508,7 @@ const ScanOut = () => {
 
         <form
           onSubmit={(e) => e.preventDefault()}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            width: "100%",
-            marginBottom: 16,
-          }}
+          className="barcode-input-form"
         >
           <input
             type="text"
@@ -536,23 +520,14 @@ const ScanOut = () => {
               setBarcode(e.target.value);
             }}
             autoFocus
-            style={{
-              width: "100%",
-              maxWidth: "400px",
-              padding: 12,
-              fontSize: 18,
-              borderRadius: 6,
-              border: "1px solid #ccc",
-              marginBottom: 8,
-              textAlign: "center",
-            }}
+            className="barcode-input-field"
           />
         </form>
 
         {barcode && (
-          <Alert variant="dark" className="text-center" style={{ width: "100%", maxWidth: "400px" }}>
+          <Alert variant="dark" className="scan-alert-container">
             <Alert.Heading>Barcode</Alert.Heading>
-            <p style={{ wordBreak: "break-all" }}>{barcode}</p>
+            <p className="barcode-display">{barcode}</p>
           </Alert>
         )}
         
@@ -562,11 +537,11 @@ const ScanOut = () => {
           <Alert
             variant={result.valid ? "success" : "danger"}
             className="text-center"
-            style={{ width: "100%", maxWidth: "400px", whiteSpace: 'pre-line' }}
+            className="error-alert-container"
           >
             {result.message}
             {result.allowManualEntry && !showManualEntryModal && (
-              <div style={{ marginTop: 12 }}>
+              <div className="error-details">
                 <Button
                   variant="outline-primary"
                   size="sm"
@@ -590,10 +565,10 @@ const ScanOut = () => {
 
 
         {editLine && (
-          <div style={{ width: "100%", maxWidth: "400px", marginTop: 8 }}>
+          <div className="manual-entry-container">
             <Alert variant="info" className="text-center">
               <Alert.Heading>Add Inventory Line</Alert.Heading>
-              <form style={{ textAlign: 'left', fontSize: 13, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <form className="manual-entry-form">
                 {Object.entries(editLine)
                   .filter(([key]) => key !== 'lineNo' && key !== 'packageUnit' && key !== 'hasFDAData')
                   .map(([key, value]) => {
@@ -634,8 +609,8 @@ const ScanOut = () => {
 
                       return (
                         <div key={key}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <label htmlFor={`edit-${key}-count`} style={{ minWidth: 110 }}>
+                          <div className="form-field-row">
+                            <label htmlFor={`edit-${key}-count`} className="form-label-fixed">
                               Package Size *:
                             </label>
                             <input
@@ -653,17 +628,12 @@ const ScanOut = () => {
                                   packageUnit
                                 }));
                               }}
-                              style={{
-                                flex: 1,
-                                padding: 4,
-                                borderRadius: 4,
-                                border: '1px solid #ccc'
-                              }}
+                              className="scan-input-flex"
                               min="1"
                             />
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                            <label htmlFor={`edit-${key}-unit`} style={{ minWidth: 110 }}>
+                          <div className="form-field-row-with-margin">
+                            <label htmlFor={`edit-${key}-unit`} className="form-label-fixed">
                               Package Unit *:
                             </label>
                             <input
@@ -679,12 +649,7 @@ const ScanOut = () => {
                                   packageUnit: newUnit
                                 }));
                               }}
-                              style={{
-                                flex: 1,
-                                padding: 4,
-                                borderRadius: 4,
-                                border: '1px solid #ccc'
-                              }}
+                              className="scan-input-flex"
                               placeholder="tablets"
                             />
                           </div>
@@ -694,8 +659,8 @@ const ScanOut = () => {
 
                     return (
                       <div key={key}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <label htmlFor={`edit-${key}`} style={{ minWidth: 110 }}>
+                        <div className="form-field-row">
+                          <label htmlFor={`edit-${key}`} className="form-label-fixed">
                             {label}{isRequired && ' *'}:
                           </label>
                           <input
@@ -728,41 +693,27 @@ const ScanOut = () => {
                               }
                             }}
                             readOnly={isReadOnly}
-                            style={{
-                              flex: 1,
-                              padding: 4,
-                              borderRadius: 4,
-                              border: (() => {
-                                // Show validation error for NDC field
-                                if (key === 'ndc11' && editLine?.[`${key}_validation`] && !editLine[`${key}_validation`].isValid) {
-                                  return '2px solid #dc3545';
-                                }
-                                return isRequired ? '2px solid #ffc107' : '1px solid #ccc';
-                              })(),
-                              backgroundColor: (() => {
-                                if (key === 'ndc11' && editLine?.[`${key}_validation`] && !editLine[`${key}_validation`].isValid) {
-                                  return '#f8d7da';
-                                }
-                                return isRequired ? '#fff9e6' : isReadOnly ? '#f8f9fa' : 'white';
-                              })(),
-                              cursor: isReadOnly ? 'not-allowed' : 'text'
-                            }}
+                            className={(() => {
+                              if (key === 'ndc11' && editLine?.[`${key}_validation`] && !editLine[`${key}_validation`].isValid) {
+                                return 'scan-input-error';
+                              }
+                              if (isReadOnly) {
+                                return 'scan-input-readonly';
+                              }
+                              return isRequired ? 'scan-input-required' : 'scan-input-optional';
+                            })()}
                             placeholder={isRequired ? 'Enter price per unit' : ''}
                           />
                         </div>
                         {/* Show validation error message for NDC field */}
                         {key === 'ndc11' && editLine?.[`${key}_validation`] && !editLine[`${key}_validation`].isValid && (
-                          <div style={{
-                            fontSize: 12,
-                            color: '#dc3545',
-                            marginTop: 2
-                          }}>
+                          <div className="validation-error-message">
                             {editLine[`${key}_validation`].message}
                           </div>
                         )}
                         {/* Show FDA lock message for NDC field */}
                         {key === 'ndc11' && editLine?.hasFDAData && (
-                          <Form.Text className="text-muted" style={{ marginTop: 2 }}>
+                          <Form.Text className="text-muted form-text-spacing">
                             🔒 NDC locked - FDA verified item
                           </Form.Text>
                         )}
@@ -771,22 +722,22 @@ const ScanOut = () => {
                   })}
               </form>
             </Alert>
-            <form onSubmit={handleSubmit} style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <form onSubmit={handleSubmit} className="main-form">
               <Button
                 type="submit"
                 variant="primary"
                 disabled={submitting}
-                style={{ marginTop: 4 }}
+                className="submit-button-container"
               >
                 {submitting ? "Adding to Report..." : "Add to Report"}
               </Button>
               {submitStatus && (
-                <Alert variant={submitStatus.ok ? "success" : "danger"} style={{ marginTop: 8, marginBottom: 0 }}>
+                <Alert variant={submitStatus.ok ? "success" : "danger"} className="alert-spacing-top">
                   {submitStatus.msg}
                 </Alert>
               )}
               {validationErrors.length > 0 && (
-                <Alert variant="warning" style={{ marginTop: 8, marginBottom: 0 }}>
+                <Alert variant="warning" className="alert-spacing-top">
                   <Alert.Heading>Validation Errors:</Alert.Heading>
                   <ul className="mb-0">
                     {validationErrors.map((error, index) => (

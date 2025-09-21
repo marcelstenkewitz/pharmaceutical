@@ -1,0 +1,5 @@
+/* DataTable Component Styles */
+
+.table-row-clickable {
+  cursor: pointer;
+}

@@ -1,0 +1,101 @@
+/* Current Items Table Component Styles */
+
+/* Text truncation classes */
+.item-name-truncate-table {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.labeler-name-truncate {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.return-instructions-truncate {
+  max-width: 200px;
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Badge styles for table */
+.manual-entry-badge-table {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+  font-size: 0.7em;
+  font-weight: 700;
+  line-height: 1;
+  color: #212529;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+  background-color: #ffc107;
+  margin-left: 0.5rem;
+}
+
+.fda-verified-badge-table {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+  font-size: 0.7em;
+  font-weight: 700;
+  line-height: 1;
+  color: white;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+  background-color: #198754;
+  margin-left: 0.5rem;
+}
+
+/* Item header styles */
+.item-header-title {
+  margin-bottom: 0;
+  flex-grow: 1;
+  font-size: 0.95rem;
+}
+
+/* Small badge styles for mobile */
+.manual-entry-badge-mobile {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+  font-size: 0.65em;
+  font-weight: 700;
+  line-height: 1;
+  color: #212529;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+  background-color: #ffc107;
+  margin-left: 0.5rem;
+}
+
+.fda-verified-badge-mobile {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+  font-size: 0.65em;
+  font-weight: 700;
+  line-height: 1;
+  color: white;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+  background-color: #198754;
+  margin-left: 0.5rem;
+}
+
+/* Button styles for table */
+.btn-table-small {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}

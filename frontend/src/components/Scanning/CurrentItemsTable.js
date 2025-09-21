@@ -5,6 +5,7 @@ import { calculateLineTotal, calculatePackagePrice, parsePackageSize } from '../
 import { createNdcService } from '../../services/NdcService';
 import GenerateForm222Button from '../Reports/GenerateForm222Button';
 import GenerateInventoryButton from '../Reports/GenerateInventoryButton';
+import './current-items-table.css';
 
 
 const CurrentItemsTable = ({
@@ -248,12 +249,11 @@ const CurrentItemsTable = ({
                   <tr key={index}>
                     <td className="fw-bold">{index + 1}</td>
                     <td>
-                      <div className="text-truncate d-flex align-items-center" style={{ maxWidth: '300px' }} title={item.itemName}>
+                      <div className="item-name-truncate-table" title={item.itemName}>
                         {item.itemName}
                         {item.isManualEntry && (
                           <span
-                            className="badge bg-warning text-dark ms-2"
-                            style={{ fontSize: '0.7em' }}
+                            className="manual-entry-badge-table"
                             title="Manual Entry"
                           >
                             🔧 Manual
@@ -261,8 +261,7 @@ const CurrentItemsTable = ({
                         )}
                         {item.hasFDAData && (
                           <span
-                            className="badge bg-success text-white ms-2"
-                            style={{ fontSize: '0.7em' }}
+                            className="fda-verified-badge-table"
                             title="FDA Verified Data"
                           >
                             ✅ FDA
@@ -315,12 +314,12 @@ const CurrentItemsTable = ({
                       )}
                     </td>
                     <td>
-                      <div className="text-truncate" style={{ maxWidth: '120px' }} title={selectedClient?.labelerName || 'N/A'}>
+                      <div className="labeler-name-truncate" title={selectedClient?.labelerName || 'N/A'}>
                         {selectedClient?.labelerName || 'N/A'}
                       </div>
                     </td>
                     <td>
-                      <div className="text-truncate" style={{ maxWidth: '200px', fontSize: '0.85em' }} title={getReturnInstructions()}>
+                      <div className="return-instructions-truncate" title={getReturnInstructions()}>
                         {getReturnInstructions() || 'N/A'}
                       </div>
                     </td>
@@ -355,12 +354,11 @@ const CurrentItemsTable = ({
                 <div className="d-flex justify-content-between align-items-start mb-2">
                   <div className="d-flex align-items-center">
                     <span className="badge bg-primary me-2">#{index + 1}</span>
-                    <h6 className="mb-0 flex-grow-1" style={{ fontSize: '0.95rem' }}>
+                    <h6 className="item-header-title">
                       {item.itemName}
                       {item.isManualEntry && (
                         <span
-                          className="badge bg-warning text-dark ms-2"
-                          style={{ fontSize: '0.65em' }}
+                          className="manual-entry-badge-mobile"
                           title="Manual Entry"
                         >
                           🔧 Manual
@@ -368,8 +366,7 @@ const CurrentItemsTable = ({
                       )}
                       {item.hasFDAData && (
                         <span
-                          className="badge bg-success text-white ms-2"
-                          style={{ fontSize: '0.65em' }}
+                          className="fda-verified-badge-mobile"
                           title="FDA Verified Data"
                         >
                           ✅ FDA
@@ -382,7 +379,7 @@ const CurrentItemsTable = ({
                       variant="outline-primary"
                       size="sm"
                       onClick={() => handleEditItem(item, index)}
-                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                      className="btn-table-small"
                     >
                       Edit
                     </Button>
@@ -390,7 +387,7 @@ const CurrentItemsTable = ({
                       variant="outline-danger"
                       size="sm"
                       onClick={() => handleDeleteItem(index)}
-                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                      className="btn-table-small"
                     >
                       Del
                     </Button>
