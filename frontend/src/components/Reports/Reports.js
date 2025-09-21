@@ -560,7 +560,7 @@ const Reports = () => {
                             <div className="h4 text-danger mb-0">
                               {selectedReport.lineItems.filter(item => item.dea_schedule === 'CII' || item.dea_schedule === 'CI').length}
                             </div>
-                            <small className="text-muted schedule-text">
+                            <small className="text-muted schedule-text d-block">
                               <span className="d-none d-md-inline">Schedule I/II</span>
                               <span className="d-md-none">CI/CII</span>
                             </small>
