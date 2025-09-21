@@ -25,7 +25,7 @@ const Scanning = () => {
   } = useContext(ClientContext);
 
   const navigate = useNavigate();
-  const [localSelectedClient, setLocalSelectedClient] = useState("");
+  const [localSelectedClient, setLocalSelectedClient] = useState(selectedClient?.id || "");
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [showEditClientModal, setShowEditClientModal] = useState(false);
   const [clientRefreshKey, setClientRefreshKey] = useState(0);
@@ -49,6 +49,13 @@ const Scanning = () => {
     // Load clients without clearing the persisted selection
     loadClients().catch(console.error);
   }, [loadClients]);
+
+  // Sync localSelectedClient with context's selectedClient
+  useEffect(() => {
+    if (selectedClient?.id) {
+      setLocalSelectedClient(selectedClient.id);
+    }
+  }, [selectedClient]);
 
   const handleClientSelection = async (clientId) => {
     setLocalSelectedClient(clientId);
