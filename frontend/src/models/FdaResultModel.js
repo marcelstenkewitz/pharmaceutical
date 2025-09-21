@@ -280,7 +280,7 @@ export class FDAResult {
   buildLineDraftFromInput(ndcInput) {
     const pkg = this.findMatchingPackage(ndcInput);
     const itemName = deriveItemNameFromFda(this);
-    let packageSize = "UNKNOWN";
+    let packageSize = "1 unit"; // Default to "1 unit" instead of "UNKNOWN"
 
     if (pkg?.description) {
       packageSize = derivePackageSizeFromDescription(pkg.description);
@@ -316,7 +316,7 @@ function derivePackageSizeFromDescription(desc = "") {
   // Examples: "100 CAPSULE in 1 BOTTLE (...)", "10 mL in 1 VIAL (...)", "1 PATCH in 1 POUCH"
   // We prefer the first "<count> <unit>" token.
   const mCountUnit = desc.match(/\b(\d+(?:\.\d+)?)\s*([a-zA-Zμu]+)\b/);
-  if (!mCountUnit) return "UNKNOWN";
+  if (!mCountUnit) return "1 unit"; // Default to "1 unit" instead of "UNKNOWN"
   let [, count, unit] = mCountUnit;
   unit = unit.toLowerCase()
     .replace(/^capsules?$/i, "capsules")

@@ -46,6 +46,7 @@ class ReportController extends BaseController {
       const report = {
         id: reportId,
         name,
+        clientId: clientId, // Add clientId reference
         createdAt: new Date().toISOString(),
         timestamp: new Date().toISOString(), // Keep for backwards compatibility
         lineItems: items || [], // Use lineItems to match frontend expectations
@@ -53,14 +54,10 @@ class ReportController extends BaseController {
         itemsCount: (items || []).length
       };
 
-      // Add report to client
-      if (!client.reports) client.reports = [];
-      client.reports.push(report);
+      // Use the repository method to add report properly
+      const newReport = this.repos.clients.addReport(clientId, report);
 
-      // Save updated client
-      this.repos.clients.update(clientId, { reports: client.reports });
-
-      return this.handleSuccess({ report }, 'create new report');
+      return this.handleSuccess({ report: newReport }, 'create new report');
     } catch (error) {
       return this.handleError(error, 'create new report');
     }

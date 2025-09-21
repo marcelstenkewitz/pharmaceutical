@@ -9,7 +9,7 @@ import { parsePackageSize, calculateLineTotal, calculatePackagePrice } from '../
  * @returns {object} Complete inventory line item with pricing
  */
 export function createInventoryLine(lineDraft, nadacRow, lineNo, packages = 1) {
-  const packageSize = lineDraft.packageSize || "UNKNOWN";
+  const packageSize = lineDraft.packageSize || "1 unit"; // Default to "1 unit" instead of "UNKNOWN"
   const parsedPackage = parsePackageSize(packageSize);
 
   const pricePerUnit = nadacRow?.pricePerUnit || 0;
@@ -59,7 +59,7 @@ export function validateInventoryLine(lineItem) {
   }
 
   if (!lineItem.packageSize || lineItem.packageSize.trim() === "" || lineItem.packageSize === "UNKNOWN") {
-    errors.push("Package size is required and cannot be 'UNKNOWN'");
+    errors.push("Package size is required. Please specify the package size (e.g., '1 tablet', '100 capsules', '10 mL')");
   }
 
   if (!lineItem.ndc11 || lineItem.ndc11.trim() === "") {
