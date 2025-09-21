@@ -148,6 +148,20 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* Statistics section improvements */
+.text-center .h4 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-center small.text-muted {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .modal-close-btn {
   min-width: 80px;
 }
@@ -184,6 +198,9 @@
     hyphens: auto;
     max-width: 100%;
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   /* Mobile table cards instead of traditional table */

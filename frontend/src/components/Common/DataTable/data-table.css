@@ -3,3 +3,55 @@
 .table-row-clickable {
   cursor: pointer;
 }
+
+/* Table responsive container improvements */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Safari smooth scrolling */
+  min-height: 0.01%; /* IE/Edge workaround */
+  width: 100%;
+  display: block;
+  position: relative;
+}
+
+/* Ensure table maintains proper width */
+.table-responsive table {
+  min-width: 100%;
+  width: max-content;
+}
+
+/* Safari-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .table-responsive {
+    margin-bottom: 15px;
+    overflow-y: hidden;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  .table-responsive > .table {
+    margin-bottom: 0;
+  }
+
+  .table-responsive > .table > thead > tr > th,
+  .table-responsive > .table > tbody > tr > th,
+  .table-responsive > .table > tfoot > tr > th,
+  .table-responsive > .table > thead > tr > td,
+  .table-responsive > .table > tbody > tr > td,
+  .table-responsive > .table > tfoot > tr > td {
+    white-space: nowrap;
+  }
+
+  .table-responsive > .table-bordered {
+    border: 0;
+  }
+}
