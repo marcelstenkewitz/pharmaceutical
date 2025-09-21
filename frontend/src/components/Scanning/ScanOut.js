@@ -536,7 +536,6 @@ const ScanOut = () => {
         {result && (
           <Alert
             variant={result.valid ? "success" : "danger"}
-            className="text-center"
             className="error-alert-container"
           >
             {result.message}
