@@ -77,9 +77,62 @@
     font-size: 1.1rem;
     letter-spacing: 0.3px;
   }
-  
+
   .header-container {
     padding: 10px;
     margin: 5px;
+  }
+}
+
+/* Landscape-specific header optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Compact header for mobile landscape */
+  .header-container {
+    padding: 8px 15px;
+    margin: 5px auto;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    max-width: 100%;
+  }
+
+  .website-header {
+    font-size: 1rem;
+    letter-spacing: 0.3px;
+    margin: 0;
+  }
+
+  /* Reduce hover effects to save space */
+  .header-container:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+  }
+
+  .header-container:hover .website-header {
+    transform: scale(1.02);
+  }
+
+  /* Stack layout for main content */
+  .mx-auto {
+    max-width: 100%;
+  }
+}
+
+/* Tablet landscape header */
+@media (orientation: landscape) and (min-width: 768px) and (max-height: 600px) {
+  .header-container {
+    padding: 12px 20px;
+    margin: 8px auto;
+    margin-bottom: 10px;
+  }
+
+  .website-header {
+    font-size: 1.5rem;
+  }
+}
+
+/* Wide landscape screens (desktop landscape) */
+@media (orientation: landscape) and (min-width: 1024px) {
+  .header-container {
+    max-width: 800px;
   }
 }

@@ -345,24 +345,221 @@
   .reports-container {
     padding: 0 15px;
   }
-  
+
   .report-details {
     font-size: 0.8rem;
   }
-  
+
   .table {
     font-size: 0.75rem;
     width: 100%;
     table-layout: auto;
     min-width: 0;
   }
-  
+
   .table th, .table td {
     padding: 0.4rem 0.2rem;
   }
-  
+
   /* Hide less important columns on tablet */
   .table .hide-mobile {
     display: none;
+  }
+}
+
+/* Landscape-specific report optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Compact container */
+  .reports-container {
+    padding: 0 15px;
+    max-width: 100%;
+  }
+
+  /* Optimize report cards */
+  .report-item {
+    padding: 0.75rem !important;
+  }
+
+  .report-header {
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* Better table layout in landscape */
+  .table-responsive {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #dee2e6;
+  }
+
+  /* Sticky table headers for better navigation */
+  .table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #343a40;
+  }
+
+  .table {
+    font-size: 0.7rem;
+    margin-bottom: 0;
+  }
+
+  .table th {
+    font-size: 0.65rem;
+    padding: 6px 4px;
+    position: sticky;
+    top: 0;
+  }
+
+  .table td {
+    padding: 4px;
+    font-size: 0.7rem;
+  }
+
+  /* Show all columns in landscape (more horizontal space) */
+  .table .hide-mobile {
+    display: table-cell !important;
+  }
+
+  /* Optimize badges and codes */
+  .badge {
+    font-size: 0.65rem;
+    padding: 0.25em 0.4em;
+  }
+
+  .table code {
+    font-size: 0.7em;
+    padding: 1px 3px;
+  }
+
+  /* Compact report statistics */
+  .text-center .h4 {
+    font-size: 1rem;
+  }
+
+  .text-center small.text-muted {
+    font-size: 0.7rem;
+  }
+
+  /* Mobile cards hidden in landscape - show table instead */
+  .mobile-table-card {
+    display: none !important;
+  }
+
+  .reports-container .table-responsive {
+    display: block !important;
+  }
+
+  /* Optimize action buttons */
+  .report-action-buttons {
+    flex-direction: row !important;
+    gap: 4px !important;
+  }
+
+  .report-btn {
+    width: auto;
+    min-width: 80px;
+    min-height: 32px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  /* Compact modals */
+  .modal-dialog {
+    max-height: calc(100vh - 20px);
+    margin: 10px auto;
+  }
+
+  .modal-body {
+    max-height: calc(100vh - 120px);
+    padding: 0.75rem;
+  }
+
+  /* Optimize item name display */
+  .item-name-truncate {
+    max-width: 200px;
+  }
+
+  /* Return instructions in landscape */
+  .return-instructions-column {
+    max-width: 150px;
+    font-size: 0.7em;
+  }
+}
+
+/* Tablet landscape reports */
+@media (orientation: landscape) and (min-width: 768px) and (max-height: 600px) {
+  .reports-container {
+    max-width: 100%;
+    padding: 0 20px;
+  }
+
+  /* Better table visibility */
+  .table-responsive {
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+  }
+
+  .table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .table {
+    font-size: 0.85rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 8px 6px;
+  }
+
+  /* Show all columns */
+  .table .hide-mobile {
+    display: table-cell !important;
+  }
+
+  /* Optimize report cards */
+  .report-item {
+    padding: 1rem;
+  }
+
+  /* Action buttons side by side */
+  .report-action-buttons {
+    flex-direction: row !important;
+  }
+
+  .report-btn {
+    width: auto;
+    min-width: 100px;
+  }
+}
+
+/* Wide landscape (desktop) */
+@media (orientation: landscape) and (min-width: 1024px) {
+  .reports-container {
+    max-width: 1400px;
+  }
+
+  /* Full-size table */
+  .table-responsive {
+    max-height: calc(100vh - 250px);
+  }
+
+  .table {
+    font-size: 0.9rem;
+  }
+
+  /* All columns visible with comfortable spacing */
+  .item-name-truncate {
+    max-width: 400px;
+  }
+
+  .return-instructions-column {
+    max-width: 250px;
   }
 }

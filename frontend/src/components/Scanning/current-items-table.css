@@ -99,3 +99,121 @@
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
 }
+
+/* Landscape-specific current items table optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Optimize text truncation for landscape */
+  .item-name-truncate-table {
+    max-width: 200px;
+    font-size: 0.8rem;
+  }
+
+  .labeler-name-truncate {
+    max-width: 100px;
+    font-size: 0.75rem;
+  }
+
+  .return-instructions-truncate {
+    max-width: 150px;
+    font-size: 0.7em;
+  }
+
+  /* Compact badges in landscape */
+  .manual-entry-badge-table,
+  .fda-verified-badge-table {
+    font-size: 0.6em;
+    padding: 0.2em 0.3em;
+    margin-left: 0.3rem;
+  }
+
+  .manual-entry-badge-mobile,
+  .fda-verified-badge-mobile {
+    font-size: 0.55em;
+    padding: 0.15em 0.25em;
+    margin-left: 0.25rem;
+  }
+
+  /* Compact item header */
+  .item-header-title {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+  }
+
+  /* Smaller action buttons */
+  .btn-table-small {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    min-height: 28px;
+  }
+
+  /* Optimize table row height */
+  .current-items-table tbody tr {
+    min-height: 32px;
+  }
+
+  /* Make better use of horizontal space */
+  .current-items-table th,
+  .current-items-table td {
+    padding: 4px 6px;
+  }
+}
+
+/* Tablet landscape current items table */
+@media (orientation: landscape) and (min-width: 768px) and (max-height: 600px) {
+  .item-name-truncate-table {
+    max-width: 350px;
+    font-size: 0.9rem;
+  }
+
+  .labeler-name-truncate {
+    max-width: 150px;
+    font-size: 0.85rem;
+  }
+
+  .return-instructions-truncate {
+    max-width: 250px;
+    font-size: 0.8em;
+  }
+
+  /* Normal badge sizing for tablets */
+  .manual-entry-badge-table,
+  .fda-verified-badge-table {
+    font-size: 0.65em;
+    padding: 0.25em 0.4em;
+  }
+
+  .item-header-title {
+    font-size: 0.9rem;
+  }
+
+  .btn-table-small {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* Wide landscape (desktop) */
+@media (orientation: landscape) and (min-width: 1024px) {
+  /* Full-size truncation limits */
+  .item-name-truncate-table {
+    max-width: 400px;
+  }
+
+  .labeler-name-truncate {
+    max-width: 200px;
+  }
+
+  .return-instructions-truncate {
+    max-width: 300px;
+    font-size: 0.85em;
+  }
+
+  /* Normal sizing for desktop landscape */
+  .manual-entry-badge-table,
+  .fda-verified-badge-table,
+  .manual-entry-badge-mobile,
+  .fda-verified-badge-mobile {
+    font-size: 0.7em;
+    padding: 0.25em 0.4em;
+  }
+}

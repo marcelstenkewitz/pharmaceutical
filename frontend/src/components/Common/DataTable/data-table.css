@@ -55,3 +55,137 @@
     border: 0;
   }
 }
+
+/* Landscape-specific table optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Optimize table container for landscape */
+  .table-responsive {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    position: relative;
+  }
+
+  /* Sticky headers for better navigation */
+  .table-responsive > .table > thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: inherit;
+  }
+
+  /* Compact table cells */
+  .table-responsive > .table {
+    font-size: 0.75rem;
+    margin-bottom: 0;
+  }
+
+  .table-responsive > .table > thead > tr > th {
+    padding: 6px 8px;
+    font-size: 0.7rem;
+    background-color: #343a40;
+    color: white;
+    position: sticky;
+    top: 0;
+  }
+
+  .table-responsive > .table > tbody > tr > td {
+    padding: 4px 6px;
+  }
+
+  /* Row hover effects */
+  .table-responsive > .table > tbody > tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+
+  /* Clickable rows */
+  .table-row-clickable {
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .table-row-clickable:hover {
+    background-color: rgba(0, 123, 255, 0.1) !important;
+  }
+
+  /* Optimize for touch */
+  .table-responsive > .table > tbody > tr {
+    min-height: 32px;
+  }
+
+  /* Show scroll indicators */
+  .table-responsive::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.1) 50%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .table-responsive:hover::after {
+    opacity: 1;
+  }
+}
+
+/* Tablet landscape tables */
+@media (orientation: landscape) and (min-width: 768px) and (max-height: 600px) {
+  .table-responsive {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    margin-bottom: 15px;
+  }
+
+  .table-responsive > .table > thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .table-responsive > .table {
+    font-size: 0.85rem;
+  }
+
+  .table-responsive > .table > thead > tr > th {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .table-responsive > .table > tbody > tr > td {
+    padding: 6px 8px;
+  }
+}
+
+/* Wide landscape (desktop) */
+@media (orientation: landscape) and (min-width: 1024px) {
+  .table-responsive {
+    max-height: calc(100vh - 250px);
+  }
+
+  .table-responsive > .table {
+    font-size: 0.9rem;
+  }
+
+  .table-responsive > .table > thead > tr > th {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .table-responsive > .table > tbody > tr > td {
+    padding: 8px 10px;
+  }
+
+  /* Better hover effects on desktop */
+  .table-row-clickable:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+}
