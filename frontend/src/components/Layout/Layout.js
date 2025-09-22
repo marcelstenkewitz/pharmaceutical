@@ -1,12 +1,9 @@
-import React, { useContext } from 'react'
 import { Stack } from "react-bootstrap";
 import { Outlet, useNavigate } from 'react-router-dom';
-import { ClientContext } from "../../context/ClientContext";
 import "./layout.css"
 
 const Layout = () => {
   const navigate = useNavigate();
-  const { selectedClient } = useContext(ClientContext);
 
   const handleHeaderClick = (e) => {
     // Prevent default to avoid any potential issues
@@ -14,13 +11,9 @@ const Layout = () => {
       e.preventDefault();
     }
 
-    // Navigate with client ID in URL to preserve context on mobile
-    if (selectedClient) {
-      const clientId = typeof selectedClient === 'object' ? selectedClient.id : selectedClient;
-      navigate(`/scanning/client/${clientId}`);
-    } else {
-      navigate('/');
-    }
+    // Always navigate to home page (which shows Create Report / View Reports)
+    // Client context is preserved through ClientContext
+    navigate('/');
   };
 
   // Handle touch events for better mobile support
