@@ -613,6 +613,7 @@ const Reports = () => {
                             <th>Package Details</th>
                             <th>Quantity</th>
                             <th>Price/Unit</th>
+                            <th>Total Price</th>
                             <th>DEA</th>
                             <th>Labeler</th>
                             <th>Notes for Return</th>
@@ -648,6 +649,7 @@ const Reports = () => {
                               </td>
                               <td>{item.packages}</td>
                               <td className="text-end">${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'}</td>
+                              <td className="text-end text-success">${item.totalPrice ? item.totalPrice.toFixed(2) : '0.00'}</td>
                               <td>
                                 {item.dea_schedule ? (
                                   <Badge 
@@ -704,6 +706,7 @@ const Reports = () => {
                             </div>
                             <div className="mb-1"><strong>Quantity:</strong> {item.packages}</div>
                             <div className="mb-1"><strong>Price/Unit:</strong> ${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'} per {item.pricingUnit || 'unit'}</div>
+                            <div className="mb-1"><strong>Total Price:</strong> <span className="text-success fw-bold">${item.totalPrice ? item.totalPrice.toFixed(2) : '0.00'}</span></div>
                             <div className="mb-1">
                               <strong>DEA Schedule:</strong> {item.dea_schedule ? (
                                 <Badge 
