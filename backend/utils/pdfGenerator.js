@@ -627,13 +627,13 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
     
     // Table header row - New column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Strength, Size, Form
     const headers = ['NDC', 'Class', 'Qty', 'P/F', 'Product Name', 'Mfr', 'Strength', 'Size', 'Form'];
-    const xPositions = [40, 105, 138, 165, 190, 280, 330, 385, 440];
+    const xPositions = [40, 110, 145, 175, 200, 295, 345, 405, 465];
 
     headers.forEach((header, index) => {
       page.drawText(header, {
         x: xPositions[index],
         y: yPosition,
-        size: 8,
+        size: 9,
         font: boldFont,
         color: rgb(0, 0, 0),
       });
@@ -643,7 +643,7 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
     // Draw line under headers
     page.drawLine({
       start: { x: 40, y: yPosition },
-      end: { x: 560, y: yPosition },
+      end: { x: 572, y: yPosition },
       thickness: 1,
       color: rgb(0, 0, 0),
     });
@@ -674,7 +674,7 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
           page.drawText(header, {
             x: xPositions[index],
             y: yPosition,
-            size: 10,
+            size: 9,
             font: boldFont,
             color: rgb(0, 0, 0),
           });
@@ -683,7 +683,7 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
 
         page.drawLine({
           start: { x: 40, y: yPosition },
-          end: { x: 560, y: yPosition },
+          end: { x: 572, y: yPosition },
           thickness: 1,
           color: rgb(0, 0, 0),
         });
@@ -698,15 +698,15 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
 
       // New column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Strength, Size, Form
       const rowData = [
-        (item.ndc11 || 'N/A').substring(0, 14),                        // NDC
+        (item.ndc11 || 'N/A').substring(0, 16),                        // NDC
         item.dea_schedule || 'NC',                                      // Class (NC = Non-Controlled)
         quantity.toString(),                                            // Qty
         item.finished === true ? 'F' : item.finished === false ? 'P' : '-', // P/F
-        (item.itemName || item.productName || 'Unknown').substring(0, 18), // Product Name (reduced for more space)
-        (item.labeler_name || item.manufacturer || '').substring(0, 10),   // Manufacturer (reduced)
-        (item.strength || '').substring(0, 10),                        // Strength
-        (item.packageSize || '').substring(0, 10),                     // Size
-        (item.dosageForm || item.form || '').substring(0, 25)         // Form (increased from 12 to 25)
+        (item.itemName || item.productName || 'Unknown').substring(0, 22), // Product Name
+        (item.labeler_name || item.manufacturer || '').substring(0, 12),   // Manufacturer
+        (item.strength || '').substring(0, 14),                        // Strength
+        (item.packageSize || '').substring(0, 14),                     // Size
+        (item.dosageForm || item.form || '').substring(0, 30)         // Form
       ];
 
       // Highlight controlled substances
@@ -718,12 +718,12 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
         page.drawText(data, {
           x: xPositions[colIndex],
           y: yPosition,
-          size: 7,
+          size: 7.5,
           font: (colIndex === 1 && isControlled) ? textFont : font,
           color: (colIndex === 1 && item.dea_schedule === 'CII') ? textColor : rgb(0, 0, 0),
         });
       });
-      yPosition -= 11;
+      yPosition -= 12;
     });
     
     // Draw line above total

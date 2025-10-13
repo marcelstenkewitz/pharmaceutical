@@ -164,6 +164,40 @@
   }
 }
 
+/* Action buttons container fix for mobile */
+.d-flex.gap-2 {
+  gap: 0.5rem;
+}
+
+/* Fallback for older browsers that don't support gap */
+@supports not (gap: 0.5rem) {
+  .d-flex.gap-2 > * {
+    margin-right: 0.5rem;
+  }
+
+  .d-flex.gap-2 > *:last-child {
+    margin-right: 0;
+  }
+}
+
+/* Mobile-specific button styling */
+@media (max-width: 768px) {
+  .d-flex.gap-2 {
+    gap: 0.25rem;
+    flex-wrap: nowrap;
+  }
+
+  @supports not (gap: 0.25rem) {
+    .d-flex.gap-2 > * {
+      margin-right: 0.25rem;
+    }
+
+    .d-flex.gap-2 > *:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
 /* Wide landscape (desktop) */
 @media (orientation: landscape) and (min-width: 1024px) {
   .table-responsive {
