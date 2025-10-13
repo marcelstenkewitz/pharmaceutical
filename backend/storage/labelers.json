@@ -1,19 +1,90 @@
 [
   {
+    "id": "henknl840l5",
     "labeler_name": "Mallinckrodt Pharmaceuticals",
+    "address": "675 McDonnell Blvd",
+    "city": "Hazelwood",
+    "state": "MO",
+    "zipCode": "63042",
     "return_instructions": "Contact Mallinckrodt Returns Department at 1-800-778-7898 for return authorization. All controlled substances must be pre-approved.",
-    "updatedAt": "2025-09-19T22:20:31.448Z"
+    "createdAt": "2025-10-13T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
   },
   {
-    "labeler_name": "Pfizer Inc",
-    "return_instructions": "Return through McKesson Pharmaceutical Returns Service or contact Pfizer Customer Service at 1-800-879-3477 for authorization."
-  },
-  {
-    "labeler_name": "Johnson & Johnson",
-    "return_instructions": "Use J&J Returns Portal online or contact customer service at 1-800-526-7736. Returns must be authorized within 90 days of expiration."
-  },
-  {
+    "id": "8z9p1v5b96x",
     "labeler_name": "Sandoz Inc",
-    "return_instructions": "Returns must be pre-authorized. Call 1-800-525-8747 or email returns@sandoz.com for authorization."
+    "address": "100 College Road West",
+    "city": "Princeton",
+    "state": "NJ",
+    "zipCode": "08540",
+    "return_instructions": "Returns must be pre-authorized. Call 1-800-525-8747 or email returns@sandoz.com for authorization.",
+    "createdAt": "2025-10-13T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
+  },
+  {
+    "id": "rolluxt7jik",
+    "labeler_name": "Actavis Pharma, Inc.",
+    "address": "400 Interpace Parkway",
+    "city": "Parsippany",
+    "state": "NJ",
+    "zipCode": "07054",
+    "return_instructions": "Contact Actavis Returns at 1-800-272-5525. Online returns portal available. Returns must be within 12 months of expiration.",
+    "createdAt": "2025-10-13T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
+  },
+  {
+    "id": "yn18foufon",
+    "labeler_name": "Hospira Inc",
+    "address": "275 North Field Drive",
+    "city": "Lake Forest",
+    "state": "IL",
+    "zipCode": "60045",
+    "return_instructions": "Use Pfizer Returns Service (Hospira is now part of Pfizer). Contact 1-800-879-3477 for authorization.",
+    "createdAt": "2025-10-13T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
+  },
+  {
+    "id": "a2vab2kegp9",
+    "labeler_name": "Major Pharmaceuticals",
+    "address": "17177 N Laurel Park Drive",
+    "city": "Livonia",
+    "state": "MI",
+    "zipCode": "48152",
+    "return_instructions": "Contact Major Pharmaceuticals Returns Department at 1-800-616-2471. Return authorization required for all products.",
+    "createdAt": "2025-10-13T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
+  },
+  {
+    "id": "lx3zp5i87ci",
+    "labeler_name": "Actavis Pharma",
+    "address": "400 Interpace Parkway",
+    "city": "Parsippany",
+    "state": "NJ",
+    "zipCode": "07054",
+    "return_instructions": "Contact Actavis Returns at 1-800-272-5525. Returns must be authorized within 90 days of expiration date.",
+    "createdAt": "2025-10-13T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
+  },
+  {
+    "id": "76khy11ooc8",
+    "labeler_name": "Mylan Pharmaceuticals",
+    "address": "1000 Mylan Boulevard",
+    "city": "Canonsburg",
+    "state": "PA",
+    "zipCode": "15317",
+    "return_instructions": "Now part of Viatris. Contact Viatris Returns at 1-877-446-3679 or use online returns portal at viatris.com/returns.",
+    "createdAt": "2025-10-13T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
+  },
+  {
+    "id": "8hy64pew48e",
+    "labeler_name": "McKesson Corporation",
+    "address": "6555 State Highway 161",
+    "city": "Irving",
+    "state": "TX",
+    "zipCode": "75039",
+    "return_instructions": "Contact McKesson Returns at 1-800-McK-CARE (625-2273). Use McKesson Connect portal for return authorizations.",
+    "createdAt": "2025-10-13T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
   }
 ]

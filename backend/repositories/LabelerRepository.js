@@ -33,6 +33,10 @@ class LabelerRepository extends BaseRepository {
     const newLabeler = {
       ...labelerData,
       id: labelerData.id || this.generateId(),
+      address: labelerData.address || null,
+      city: labelerData.city || null,
+      state: labelerData.state || null,
+      zipCode: labelerData.zipCode || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

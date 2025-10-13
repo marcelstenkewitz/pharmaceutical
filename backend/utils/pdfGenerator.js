@@ -408,131 +408,246 @@ function getForm222Coordinates() {
 /**
  * Generate a general inventory report PDF
  * @param {Object} reportData - Report data including client info and line items
+ * @param {Object} companyInfo - Company information (Direct Returns)
+ * @param {Object} wholesalerInfo - Wholesaler information
  * @returns {Promise<Buffer>} - Generated PDF as buffer
  */
-async function generateInventoryPDF(reportData) {
+async function generateInventoryPDF(reportData, companyInfo = null, wholesalerInfo = null) {
   try {
     // Create a new PDF document
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([612, 792]); // Letter size
+
+    // Default company info if not provided
+    const company = companyInfo || {
+      name: 'Direct Returns',
+      address: '123 Pharma Street',
+      city: 'Medical City',
+      state: 'CA',
+      zipCode: '90210',
+      phone: '(555) 123-4567',
+      deaNumber: 'DR1234567'
+    };
+
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    
+
+    // Calculate total pages
+    const itemsPerPage = 25; // Estimated
+    const totalPages = Math.ceil((reportData.lineItems?.length || 0) / itemsPerPage) || 1;
+    let currentPageNum = 1;
+
+    // First page
+    let page = pdfDoc.addPage([612, 792]); // Letter size
     const { width, height } = page.getSize();
-    let yPosition = height - 50;
-    
-    // Title
-    page.drawText('PHARMACEUTICAL INVENTORY REPORT', {
-      x: 50,
-      y: yPosition,
-      size: 18,
-      font: boldFont,
-      color: rgb(0, 0, 0),
-    });
-    yPosition -= 30;
-    
-    // Client Information
-    if (reportData.client) {
-      page.drawText('Client Information:', {
-        x: 50,
-        y: yPosition,
-        size: 12,
+
+    // Draw header (3-column grid)
+    const drawHeader = (page, pageNum) => {
+      let y = height - 40;
+      const col1X = 40;
+      const col2X = 220;
+      const col3X = 420;
+      const lineHeight = 12;
+
+      // COLUMN 1 - Company Logo and Info
+      // Row 1: Company Logo/Name
+      page.drawText('DIRECT RETURNS', {
+        x: col1X,
+        y: y,
+        size: 14,
+        font: boldFont,
+        color: rgb(0.2, 0.4, 0.8),
+      });
+      y -= lineHeight + 8;
+
+      // Row 2: Company Information
+      page.drawText('Direct Returns', {
+        x: col1X,
+        y: y,
+        size: 9,
         font: boldFont,
         color: rgb(0, 0, 0),
       });
-      yPosition -= 20;
-      
-      const clientInfo = [
-        `Business: ${reportData.client.businessName || 'N/A'}`,
-        `DEA Number: ${reportData.client.deaNumber || 'N/A'}`,
-        `Address: ${reportData.client.streetAddress || ''}, ${reportData.client.city || ''}, ${reportData.client.state || ''} ${reportData.client.zipCode || ''}`,
-      ];
-      
-      clientInfo.forEach(info => {
-        page.drawText(info, {
-          x: 70,
-          y: yPosition,
-          size: 10,
+      y -= lineHeight;
+
+      page.drawText(`${company.address}`, {
+        x: col1X,
+        y: y,
+        size: 8,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight - 2;
+
+      page.drawText(`${company.city}, ${company.state} ${company.zipCode}`, {
+        x: col1X,
+        y: y,
+        size: 8,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight - 2;
+
+      page.drawText(`Phone: ${company.phone}`, {
+        x: col1X,
+        y: y,
+        size: 8,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight - 2;
+
+      page.drawText(`DEA: ${company.deaNumber}`, {
+        x: col1X,
+        y: y,
+        size: 8,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+
+      // COLUMN 2 - Wholesaler Information
+      y = height - 40 - lineHeight - 8; // Reset to row 2
+
+      if (wholesalerInfo && wholesalerInfo.name) {
+        page.drawText('Wholesaler:', {
+          x: col2X,
+          y: y,
+          size: 9,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight;
+
+        page.drawText(wholesalerInfo.name, {
+          x: col2X,
+          y: y,
+          size: 8,
           font: font,
           color: rgb(0, 0, 0),
         });
-        yPosition -= 15;
-      });
-    }
-    
-    // Report Date and Statistics
-    yPosition -= 10;
-    page.drawText(`Report Date: ${new Date().toLocaleDateString('en-US')}`, {
-      x: 50,
-      y: yPosition,
-      size: 10,
-      font: font,
-      color: rgb(0, 0, 0),
-    });
-    yPosition -= 15;
-    
-    // Count items by DEA schedule
-    const stats = {
-      total: reportData.lineItems?.length || 0,
-      cii: 0,
-      ciii: 0,
-      civ: 0,
-      cv: 0,
-      nonControlled: 0
-    };
-    
-    reportData.lineItems?.forEach(item => {
-      switch (item.dea_schedule) {
-        case 'CII': stats.cii++; break;
-        case 'CIII': stats.ciii++; break;
-        case 'CIV': stats.civ++; break;
-        case 'CV': stats.cv++; break;
-        default: stats.nonControlled++; break;
+        y -= lineHeight - 2;
+
+        if (wholesalerInfo.address) {
+          page.drawText(wholesalerInfo.address, {
+            x: col2X,
+            y: y,
+            size: 8,
+            font: font,
+            color: rgb(0, 0, 0),
+          });
+          y -= lineHeight - 2;
+
+          if (wholesalerInfo.city && wholesalerInfo.state) {
+            page.drawText(`${wholesalerInfo.city}, ${wholesalerInfo.state} ${wholesalerInfo.zipCode || ''}`, {
+              x: col2X,
+              y: y,
+              size: 8,
+              font: font,
+              color: rgb(0, 0, 0),
+            });
+          }
+        }
       }
-    });
-    
-    page.drawText(`Total Items: ${stats.total} (CII: ${stats.cii}, CIII: ${stats.ciii}, CIV: ${stats.civ}, CV: ${stats.cv}, Non-Controlled: ${stats.nonControlled})`, {
-      x: 50,
+
+      // COLUMN 3 - Page Info and Customer Details
+      y = height - 40; // Reset to row 1
+
+      // Row 1: Page numbers and date
+      page.drawText(`Page ${pageNum} of ${totalPages}`, {
+        x: col3X,
+        y: y,
+        size: 8,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight - 2;
+
+      page.drawText(`Date: ${new Date().toLocaleDateString('en-US')}`, {
+        x: col3X,
+        y: y,
+        size: 8,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight + 6;
+
+      // Row 2/3: Customer Information
+      if (reportData.client) {
+        page.drawText('Customer Information:', {
+          x: col3X,
+          y: y,
+          size: 8,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight;
+
+        const customerInfo = [
+          `Name: ${reportData.client.businessName || 'N/A'}`,
+          `DEA: ${reportData.client.deaNumber || 'N/A'}`,
+          `${reportData.client.streetAddress || ''}`,
+          `${reportData.client.city || ''}, ${reportData.client.state || ''} ${reportData.client.zipCode || ''}`
+        ];
+
+        customerInfo.forEach(info => {
+          if (info.trim()) {
+            page.drawText(info, {
+              x: col3X,
+              y: y,
+              size: 7,
+              font: font,
+              color: rgb(0, 0, 0),
+            });
+            y -= lineHeight - 3;
+          }
+        });
+      }
+
+      // Draw separator line under header
+      page.drawLine({
+        start: { x: 40, y: height - 130 },
+        end: { x: width - 40, y: height - 130 },
+        thickness: 2,
+        color: rgb(0.2, 0.4, 0.8),
+      });
+
+      return height - 145; // Return starting Y position for content
+    };
+
+    let yPosition = drawHeader(page, currentPageNum);
+
+    // Table title
+    page.drawText('Inventory Items', {
+      x: 40,
       y: yPosition,
-      size: 10,
-      font: font,
-      color: rgb(0, 0, 0),
-    });
-    yPosition -= 25;
-    
-    // Table Headers
-    page.drawText('Inventory Items:', {
-      x: 50,
-      y: yPosition,
-      size: 12,
+      size: 11,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
-    yPosition -= 20;
+    yPosition -= 18;
     
-    // Table header row
-    const headers = ['#', 'Item Name', 'NDC', 'Package', 'Qty', '$/Unit', 'Total', 'DEA'];
-    const xPositions = [50, 70, 220, 300, 360, 400, 460, 510];
-    
+    // Table header row - New column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Strength, Size, Form
+    const headers = ['NDC', 'Class', 'Qty', 'P/F', 'Product Name', 'Mfr', 'Strength', 'Size', 'Form'];
+    const xPositions = [40, 105, 138, 165, 190, 280, 330, 385, 440];
+
     headers.forEach((header, index) => {
       page.drawText(header, {
         x: xPositions[index],
         y: yPosition,
-        size: 10,
+        size: 8,
         font: boldFont,
         color: rgb(0, 0, 0),
       });
     });
     yPosition -= 5;
-    
+
     // Draw line under headers
     page.drawLine({
-      start: { x: 50, y: yPosition },
-      end: { x: 550, y: yPosition },
+      start: { x: 40, y: yPosition },
+      end: { x: 560, y: yPosition },
       thickness: 1,
       color: rgb(0, 0, 0),
     });
-    yPosition -= 15;
+    yPosition -= 12;
     
     // Calculate total price
     let totalPrice = 0;
@@ -540,9 +655,39 @@ async function generateInventoryPDF(reportData) {
     // Table rows
     reportData.lineItems?.forEach((item, index) => {
       // Check if we need a new page
-      if (yPosition < 100) {
-        const newPage = pdfDoc.addPage([612, 792]);
-        yPosition = height - 50;
+      if (yPosition < 150) {
+        currentPageNum++;
+        page = pdfDoc.addPage([612, 792]);
+        yPosition = drawHeader(page, currentPageNum);
+
+        // Redraw table title and headers on new page
+        page.drawText('Inventory Items (continued)', {
+          x: 40,
+          y: yPosition,
+          size: 11,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+        yPosition -= 18;
+
+        headers.forEach((header, index) => {
+          page.drawText(header, {
+            x: xPositions[index],
+            y: yPosition,
+            size: 10,
+            font: boldFont,
+            color: rgb(0, 0, 0),
+          });
+        });
+        yPosition -= 5;
+
+        page.drawLine({
+          start: { x: 40, y: yPosition },
+          end: { x: 560, y: yPosition },
+          thickness: 1,
+          color: rgb(0, 0, 0),
+        });
+        yPosition -= 15;
       }
       
       const pricePerUnit = item.pricePerUnit || 0;
@@ -551,31 +696,34 @@ async function generateInventoryPDF(reportData) {
       const itemTotal = pricePerUnit * unitsPerPackage * quantity;
       totalPrice += itemTotal;
 
+      // New column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Strength, Size, Form
       const rowData = [
-        (index + 1).toString(),
-        (item.itemName || 'Unknown').substring(0, 25),
-        item.ndc11 || 'N/A',
-        (item.packageSize || 'N/A').substring(0, 10),
-        quantity.toString(),
-        `$${pricePerUnit.toFixed(4)}`,
-        `$${itemTotal.toFixed(2)}`,
-        item.dea_schedule || '-'
+        (item.ndc11 || 'N/A').substring(0, 14),                        // NDC
+        item.dea_schedule || 'NC',                                      // Class (NC = Non-Controlled)
+        quantity.toString(),                                            // Qty
+        item.finished === true ? 'F' : item.finished === false ? 'P' : '-', // P/F
+        (item.itemName || item.productName || 'Unknown').substring(0, 18), // Product Name (reduced for more space)
+        (item.labeler_name || item.manufacturer || '').substring(0, 10),   // Manufacturer (reduced)
+        (item.strength || '').substring(0, 10),                        // Strength
+        (item.packageSize || '').substring(0, 10),                     // Size
+        (item.dosageForm || item.form || '').substring(0, 25)         // Form (increased from 12 to 25)
       ];
-      
+
       // Highlight controlled substances
+      const isControlled = item.dea_schedule && item.dea_schedule !== 'NC';
       const textColor = item.dea_schedule === 'CII' ? rgb(0.8, 0, 0) : rgb(0, 0, 0);
       const textFont = item.dea_schedule === 'CII' ? boldFont : font;
-      
+
       rowData.forEach((data, colIndex) => {
         page.drawText(data, {
           x: xPositions[colIndex],
           y: yPosition,
-          size: 9,
-          font: colIndex === 7 && item.dea_schedule ? textFont : font,
-          color: colIndex === 7 && item.dea_schedule === 'CII' ? textColor : rgb(0, 0, 0),
+          size: 7,
+          font: (colIndex === 1 && isControlled) ? textFont : font,
+          color: (colIndex === 1 && item.dea_schedule === 'CII') ? textColor : rgb(0, 0, 0),
         });
       });
-      yPosition -= 15;
+      yPosition -= 11;
     });
     
     // Draw line above total
@@ -596,7 +744,7 @@ async function generateInventoryPDF(reportData) {
       font: boldFont,
       color: rgb(0, 0, 0),
     });
-    
+
     page.drawText(`$${totalPrice.toFixed(2)}`, {
       x: 460,
       y: yPosition,
@@ -604,13 +752,93 @@ async function generateInventoryPDF(reportData) {
       font: boldFont,
       color: rgb(0, 0, 0),
     });
-    yPosition -= 30;
-    
-    // Footer
-    if (yPosition > 50) {
-      yPosition = 50;
+    yPosition -= 50;
+
+    // Signature Lines
+    let currentPage = page;
+    if (yPosition < 150) {
+      // Add new page if not enough space for signatures
+      currentPage = pdfDoc.addPage([612, 792]);
+      yPosition = height - 100;
     }
-    page.drawText('PDF generated by Direct Returns', {
+
+    // Customer Signature Section
+    currentPage.drawText('Customer Signature:', {
+      x: 50,
+      y: yPosition,
+      size: 10,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    yPosition -= 5;
+
+    // Customer signature line
+    currentPage.drawLine({
+      start: { x: 50, y: yPosition },
+      end: { x: 300, y: yPosition },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+    yPosition -= 15;
+
+    // Customer Date field
+    currentPage.drawText('Date:', {
+      x: 50,
+      y: yPosition,
+      size: 9,
+      font: font,
+      color: rgb(0, 0, 0),
+    });
+
+    currentPage.drawLine({
+      start: { x: 80, y: yPosition - 2 },
+      end: { x: 200, y: yPosition - 2 },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+    yPosition -= 30;
+
+    // Company Signature Section
+    currentPage.drawText('Company Signature:', {
+      x: 50,
+      y: yPosition,
+      size: 10,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    yPosition -= 5;
+
+    // Company signature line
+    currentPage.drawLine({
+      start: { x: 50, y: yPosition },
+      end: { x: 300, y: yPosition },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+    yPosition -= 15;
+
+    // Company Date field
+    currentPage.drawText('Date:', {
+      x: 50,
+      y: yPosition,
+      size: 9,
+      font: font,
+      color: rgb(0, 0, 0),
+    });
+
+    currentPage.drawLine({
+      start: { x: 80, y: yPosition - 2 },
+      end: { x: 200, y: yPosition - 2 },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+    yPosition -= 30;
+
+    // Footer
+    if (yPosition < 50) {
+      yPosition = 30;
+    }
+    currentPage.drawText('PDF generated by Direct Returns', {
       x: width / 2 - 100,
       y: yPosition,
       size: 8,

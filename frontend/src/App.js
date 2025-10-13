@@ -5,9 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Reports from "./components/Reports/Reports";
 import ScanOut from "./components/Scanning/ScanOut";
-import ManualEntries from "./components/Admin/ManualEntries";
-import ClientManagement from "./components/Admin/ClientManagement";
-import LabelersManagement from "./components/Admin/LabelersManagement";
+import AdminPanel from "./components/Admin/AdminPanel";
 
 //TO DO
 //Move scanner logic out
@@ -28,10 +26,8 @@ const App = () => {
           <Route path="scanning" element={<ScanOut />} />
           <Route path="scanning/client/:clientId" element={<ScanOut />} />
           <Route path="scanning/client/:clientId/report/:reportId" element={<ScanOut />} />
-          {/* Admin routes */}
-          <Route path="clients" element={<ClientManagement />} />
-          <Route path="manual-entries" element={<ManualEntries />} />
-          <Route path="labelers" element={<LabelersManagement />} />
+          {/* Consolidated Admin route */}
+          <Route path="admin" element={<AdminPanel />} />
         </Route>
       </Routes>
     </BrowserRouter>

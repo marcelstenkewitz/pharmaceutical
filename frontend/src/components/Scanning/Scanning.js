@@ -33,6 +33,8 @@ const Scanning = () => {
   const [newClientData, setNewClientData] = useState({
     businessName: "",
     deaNumber: "",
+    deaExpirationDate: "",
+    stateLicenseNumber: "",
     streetAddress: "",
     city: "",
     state: "",
@@ -107,6 +109,8 @@ const Scanning = () => {
       setNewClientData({
         businessName: "",
         deaNumber: "",
+        deaExpirationDate: "",
+        stateLicenseNumber: "",
         streetAddress: "",
         city: "",
         state: "",
@@ -117,19 +121,6 @@ const Scanning = () => {
     } catch (error) {
       console.error("Failed to add client:", error.message || error);
     }
-  };
-
-  const handleManualEntries = () => {
-    navigate("/manual-entries");
-  };
-
-
-  const handleManageClients = () => {
-    navigate("/clients");
-  };
-
-  const handleManageLabelers = () => {
-    navigate("/labelers");
   };
 
   const handleEditClient = () => {
@@ -146,6 +137,8 @@ const Scanning = () => {
         id: clientToEdit.id,
         businessName: clientToEdit.businessName || '',
         deaNumber: clientToEdit.deaNumber || '',
+        deaExpirationDate: clientToEdit.deaExpirationDate || '',
+        stateLicenseNumber: clientToEdit.stateLicenseNumber || '',
         streetAddress: clientToEdit.streetAddress || '',
         city: clientToEdit.city || '',
         state: clientToEdit.state || '',
@@ -182,6 +175,8 @@ const Scanning = () => {
       await updateClient(editingClient.id, {
         businessName: editingClient.businessName,
         deaNumber: editingClient.deaNumber,
+        deaExpirationDate: editingClient.deaExpirationDate,
+        stateLicenseNumber: editingClient.stateLicenseNumber,
         streetAddress: editingClient.streetAddress,
         city: editingClient.city,
         state: editingClient.state,
@@ -264,25 +259,11 @@ const Scanning = () => {
             </Button>
           )}
           <Button
-            variant="info"
-            onClick={handleManualEntries}
-            className="scanning-action-btn"
-          >
-            Manage Manual Entries
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleManageClients}
-            className="scanning-action-btn"
-          >
-            Manage Clients
-          </Button>
-          <Button
             variant="primary"
-            onClick={handleManageLabelers}
+            onClick={() => navigate("/admin")}
             className="scanning-action-btn"
           >
-            Manage Labelers
+            Admin Panel
           </Button>
         </div>
         <div className="icon-action-container">
@@ -351,6 +332,23 @@ const Scanning = () => {
                   {deaValidationError}
                 </Form.Control.Feedback>
               )}
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>DEA Expiration Date</Form.Label>
+              <Form.Control
+                type="date"
+                value={newClientData.deaExpirationDate}
+                onChange={(e) => setNewClientData({...newClientData, deaExpirationDate: e.target.value})}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>State License Number</Form.Label>
+              <Form.Control
+                type="text"
+                value={newClientData.stateLicenseNumber}
+                onChange={(e) => setNewClientData({...newClientData, stateLicenseNumber: e.target.value})}
+                placeholder="e.g., 12345-ABC"
+              />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Street Address *</Form.Label>
@@ -465,6 +463,23 @@ const Scanning = () => {
                   {editDeaValidationError}
                 </Form.Control.Feedback>
               )}
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>DEA Expiration Date</Form.Label>
+              <Form.Control
+                type="date"
+                value={editingClient?.deaExpirationDate || ''}
+                onChange={(e) => setEditingClient(prev => ({...prev, deaExpirationDate: e.target.value}))}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>State License Number</Form.Label>
+              <Form.Control
+                type="text"
+                value={editingClient?.stateLicenseNumber || ''}
+                onChange={(e) => setEditingClient(prev => ({...prev, stateLicenseNumber: e.target.value}))}
+                placeholder="e.g., 12345-ABC"
+              />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Street Address *</Form.Label>

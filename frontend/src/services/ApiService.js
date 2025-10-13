@@ -267,9 +267,16 @@ class ApiService {
     }
   }
 
-  async saveLabeler(labeler_name, return_instructions) {
+  async saveLabeler(labeler_name, return_instructions, address = null, city = null, state = null, zipCode = null) {
     try {
-      const response = await this.client.post('/labelers', { labeler_name, return_instructions });
+      const response = await this.client.post('/labelers', {
+        labeler_name,
+        return_instructions,
+        address,
+        city,
+        state,
+        zipCode
+      });
       return response.data;
     } catch (error) {
       throw this.handleError(error, 'Failed to save labeler');

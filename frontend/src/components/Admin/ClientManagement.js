@@ -28,7 +28,22 @@ const ClientManagement = () => {
       },
       {
         key: 'deaNumber',
-        label: 'DEA Number'
+        label: 'DEA Number',
+        render: (client) => (
+          <div>
+            <div><code>{client.deaNumber}</code></div>
+            {client.deaExpirationDate && (
+              <div className="small text-muted">
+                Exp: {new Date(client.deaExpirationDate).toLocaleDateString()}
+              </div>
+            )}
+          </div>
+        )
+      },
+      {
+        key: 'stateLicenseNumber',
+        label: 'State License',
+        render: (client) => client.stateLicenseNumber || '-'
       },
       {
         key: 'address',
@@ -67,6 +82,18 @@ const ClientManagement = () => {
         type: 'text',
         required: true,
         validate: validateDEANumber
+      },
+      {
+        name: 'deaExpirationDate',
+        label: 'DEA Expiration Date',
+        type: 'date',
+        required: false
+      },
+      {
+        name: 'stateLicenseNumber',
+        label: 'State License Number',
+        type: 'text',
+        required: false
       },
       {
         name: 'streetAddress',

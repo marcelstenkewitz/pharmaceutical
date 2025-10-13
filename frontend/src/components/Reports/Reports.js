@@ -604,19 +604,21 @@ const Reports = () => {
                   <Card.Body>
                     {/* Desktop/Tablet Table View */}
                     <div className="table-responsive d-none d-md-block">
-                      <table className="table table-sm">
-                        <thead>
+                      <table className="table table-sm table-hover">
+                        <thead className="table-light">
                           <tr>
-                            <th>Line #</th>
-                            <th>Item Name</th>
-                            <th>NDC-11</th>
-                            <th>Package Details</th>
-                            <th>Quantity</th>
-                            <th>Price/Unit</th>
-                            <th>Total Price</th>
-                            <th>DEA</th>
-                            <th>Labeler</th>
-                            <th>Notes for Return</th>
+                            <th style={{minWidth: '50px'}}>Line #</th>
+                            <th style={{minWidth: '200px'}}>Item Name</th>
+                            <th style={{minWidth: '110px'}}>NDC-11</th>
+                            <th style={{minWidth: '100px'}}>Strength</th>
+                            <th style={{minWidth: '180px', maxWidth: '220px'}}>Dosage Form</th>
+                            <th style={{minWidth: '120px'}}>Package Details</th>
+                            <th style={{minWidth: '70px'}}>Qty</th>
+                            <th style={{minWidth: '90px'}} className="text-end">Price/Unit</th>
+                            <th style={{minWidth: '100px'}} className="text-end">Total Price</th>
+                            <th style={{minWidth: '70px'}}>DEA</th>
+                            <th style={{minWidth: '150px'}}>Labeler</th>
+                            <th style={{minWidth: '200px'}}>Notes for Return</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -625,10 +627,10 @@ const Reports = () => {
                               <td>{item.lineNo}</td>
                               <td>
                                 <div className="d-flex align-items-center">
-                                  {item.itemName}
+                                  <span>{item.itemName}</span>
                                   {item.isManualEntry && (
                                     <span
-                                      className="manual-entry-badge"
+                                      className="manual-entry-badge ms-2"
                                       title="Manual Entry"
                                     >
                                       🔧 Manual
@@ -636,7 +638,23 @@ const Reports = () => {
                                   )}
                                 </div>
                               </td>
-                              <td>{item.ndc11}</td>
+                              <td><code className="small">{item.ndc11}</code></td>
+                              <td>
+                                {item.strength ? (
+                                  <span className="text-primary fw-semibold">{item.strength}</span>
+                                ) : (
+                                  <span className="text-muted">-</span>
+                                )}
+                              </td>
+                              <td style={{minWidth: '180px', maxWidth: '220px'}}>
+                                {item.dosageForm ? (
+                                  <span className="text-secondary" title={item.dosageForm}>
+                                    {item.dosageForm}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted">-</span>
+                                )}
+                              </td>
                               <td>
                                 <div>
                                   <strong className="text-primary">{item.packageSize}</strong>
@@ -654,11 +672,11 @@ const Reports = () => {
                               </td>
                               <td>
                                 {item.dea_schedule ? (
-                                  <Badge 
-                                    bg={item.dea_schedule === 'CII' ? 'danger' : 
+                                  <Badge
+                                    bg={item.dea_schedule === 'CII' ? 'danger' :
                                         item.dea_schedule === 'CIII' ? 'warning' :
                                         item.dea_schedule === 'CIV' || item.dea_schedule === 'CV' ? 'info' : 'secondary'}
-                                    title={item.dea_schedule === 'CII' ? 'Schedule II - Requires Form 222' : 
+                                    title={item.dea_schedule === 'CII' ? 'Schedule II - Requires Form 222' :
                                            `Schedule ${item.dea_schedule.substring(1)} Controlled Substance`}
                                   >
                                     {item.dea_schedule}
@@ -695,6 +713,16 @@ const Reports = () => {
                           </div>
                           <div className="small">
                             <div className="mb-1"><strong>NDC:</strong> <code>{item.ndc11}</code></div>
+                            {item.strength && (
+                              <div className="mb-1">
+                                <strong>Strength:</strong> <span className="text-primary fw-semibold">{item.strength}</span>
+                              </div>
+                            )}
+                            {item.dosageForm && (
+                              <div className="mb-1">
+                                <strong>Dosage Form:</strong> <span className="text-secondary">{item.dosageForm}</span>
+                              </div>
+                            )}
                             <div className="mb-1">
                               <strong>Package:</strong>
                               <div>
@@ -711,8 +739,8 @@ const Reports = () => {
                             <div className="mb-1"><strong>Total Price:</strong> <strong className="text-success">${item.totalPrice ? item.totalPrice.toFixed(2) : '0.00'}</strong></div>
                             <div className="mb-1">
                               <strong>DEA Schedule:</strong> {item.dea_schedule ? (
-                                <Badge 
-                                  bg={item.dea_schedule === 'CII' ? 'danger' : 
+                                <Badge
+                                  bg={item.dea_schedule === 'CII' ? 'danger' :
                                       item.dea_schedule === 'CIII' ? 'warning' :
                                       item.dea_schedule === 'CIV' || item.dea_schedule === 'CV' ? 'info' : 'secondary'}
                                   className="ms-1"

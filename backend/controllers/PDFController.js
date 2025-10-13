@@ -14,6 +14,30 @@ class PDFController extends BaseController {
   }
 
   /**
+   * Get wholesaler info from labelers repository
+   * @param {string} labelerName - The labeler/wholesaler name
+   * @returns {Object|null} Wholesaler info or null
+   */
+  async getWholesalerInfo(labelerName) {
+    try {
+      const labeler = this.repos.labelers.findByName(labelerName);
+      if (labeler) {
+        return {
+          name: labeler.labeler_name,
+          address: labeler.address || null,
+          city: labeler.city || null,
+          state: labeler.state || null,
+          zipCode: labeler.zipCode || null
+        };
+      }
+      return null;
+    } catch (error) {
+      console.warn('Could not fetch wholesaler info:', error.message);
+      return null;
+    }
+  }
+
+  /**
    * Find client and report for PDF generation
    * @param {string} clientId - The client ID
    * @param {string} reportId - The report ID
@@ -117,20 +141,45 @@ class PDFController extends BaseController {
       const reportData = {
         client,
         lineItems: (report.lineItems || []).map(item => ({
-          itemName: item.itemName || item.name,
+          // Basic identification
+          itemName: item.itemName || item.name || item.productName,
           ndc11: item.ndc11 || item.ndc,
+          productName: item.productName || item.itemName || item.name,
+
+          // Package and quantity
           packageSize: item.packageSize,
           packages: item.packages,
           unitsPerPackage: item.unitsPerPackage || 1,
+
+          // Pricing
           pricePerUnit: item.pricePerUnit || 0,
           pricePerPackage: item.pricePerPackage || 0,
           totalPrice: item.totalPrice || 0,
-          labeler_name: item.labeler_name || '',
-          dea_schedule: item.dea_schedule || ''
+
+          // Manufacturer and class
+          labeler_name: item.labeler_name || item.manufacturer || '',
+          manufacturer: item.manufacturer || item.labeler_name || '',
+          dea_schedule: item.dea_schedule || null,
+
+          // Product details from FDA
+          strength: item.strength || '',
+          dosageForm: item.dosageForm || item.form || '',
+          form: item.form || item.dosageForm || '',
+          finished: item.finished !== undefined ? item.finished : null,
+
+          // Additional description
+          brandName: item.brandName || '',
+          genericName: item.genericName || '',
+          route: item.route || []
         }))
       };
 
-      const pdfBuffer = await generateInventoryPDF(reportData, templatePath);
+      // Get wholesaler info from the first line item (if available)
+      const wholesalerInfo = report.lineItems && report.lineItems.length > 0 && report.lineItems[0].labeler_name
+        ? await this.getWholesalerInfo(report.lineItems[0].labeler_name)
+        : null;
+
+      const pdfBuffer = await generateInventoryPDF(reportData, null, wholesalerInfo);
       const filename = `inventory_${client.businessName}_${new Date().toISOString().split('T')[0]}.pdf`;
 
       return this.handleSuccess({

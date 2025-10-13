@@ -54,6 +54,8 @@ class ClientRepository extends BaseRepository {
       id: clientData.id || this.generateId(),
       name: clientData.businessName,
       reports: clientData.reports || [],
+      deaExpirationDate: clientData.deaExpirationDate || null,
+      stateLicenseNumber: clientData.stateLicenseNumber || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

@@ -90,6 +90,23 @@ export const ClientProvider = ({ children }) => {
     saveToStorage(STORAGE_KEYS.REPORTS_CACHE, reports);
   }, [reports]);
 
+  // Validate selectedClient exists in clients list after loading
+  useEffect(() => {
+    if (selectedClient && clients.length > 0) {
+      const clientExists = clients.some(c => c.id === selectedClient.id);
+      if (!clientExists) {
+        console.warn(`Selected client ${selectedClient.id} no longer exists. Clearing selection.`);
+        setSelectedClient(null);
+        setCurrentReport(null);
+        setReports([]);
+        clearStorage(STORAGE_KEYS.SELECTED_CLIENT);
+        clearStorage(STORAGE_KEYS.CURRENT_REPORT);
+        clearStorage(STORAGE_KEYS.SESSION_REPORT);
+        clearStorage(STORAGE_KEYS.REPORTS_CACHE);
+      }
+    }
+  }, [clients, selectedClient]);
+
   // --- CLIENT ACTIONS ---
   const loadClients = useCallback(async () => {
     setLoading(true);

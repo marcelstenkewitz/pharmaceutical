@@ -300,12 +300,23 @@ export class FDAResult {
       packageSize,
       itemName,
       labeler_name: this.labeler_name || "Unknown Labeler",
+
       // Useful extras
       package_ndc: pkg?.package_ndc || null,
       package_description: pkg?.description || null,
       labeler: this.labeler_name || null,
+
+      // FDA fields for new PDF column structure
       dosage_form: this.dosage_form || null,
+      dosageForm: this.dosage_form || null,
       strength: this.active_ingredients?.[0]?.strength || null,
+      finished: this.finished !== undefined ? this.finished : null,
+      dea_schedule: this.dea_schedule || null,
+      brandName: this.brand_name || null,
+      genericName: this.generic_name || null,
+      productName: this.generic_name || this.brand_name || itemName,
+      route: this.route || [],
+      manufacturer: this.labeler_name || null
     };
   }
 }

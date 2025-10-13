@@ -1,79 +1,63 @@
 [
   {
-    "id": "o12fcgk97zb",
-    "name": "Sunrise Medical Center Test Edit",
-    "businessName": "Sunrise Medical Center Test Edit",
+    "id": "5e4uaniuyeq",
+    "name": "Dr. Sarah Johnson",
+    "businessName": "Sunrise Medical Center",
     "deaNumber": "BJ1234567",
+    "deaExpirationDate": "2026-12-31",
+    "stateLicenseNumber": "CA-PHY-12345",
     "streetAddress": "123 Medical Plaza Dr",
     "city": "Los Angeles",
     "state": "CA",
     "zipCode": "90210",
     "phoneNumber": "(555) 123-4567",
+    "contactName": "Dr. Sarah Johnson",
     "reports": [
-      "16fbc4f1-77ef-492b-8352-3e383de6fa8e",
-      "f911c686-6757-48b4-a097-9ffd216b89e3"
+      "4533a425-6ec4-4c8d-b73d-a3038ac7479b",
+      "c5889531-08eb-469d-8590-1967239e8ea8",
+      "18fde1e9-4a3a-471a-9373-38d5aa0bfc8e"
     ],
-    "updatedAt": "2025-09-19T21:47:31.195Z"
+    "createdAt": "2024-10-13T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
   },
   {
-    "id": "fcu0tukfic",
+    "id": "voyyqpzsvf",
     "name": "Dr. Michael Chen",
     "businessName": "Pacific Coast Pharmacy",
     "deaNumber": "BC9876543",
+    "deaExpirationDate": "2027-06-30",
+    "stateLicenseNumber": "CA-PHARM-67890",
     "streetAddress": "456 Harbor Blvd",
     "city": "San Francisco",
     "state": "CA",
     "zipCode": "94102",
     "phoneNumber": "(555) 987-6543",
+    "contactName": "Dr. Michael Chen",
     "reports": [
-      "be80c9fd-f624-44f9-9cef-a80a349fdc9c",
-      "28f0021b-13d4-4414-bf47-f8e0ed168842"
+      "59de53ab-3fa2-4bb3-8d70-82df2aa792f4",
+      "d2338950-c576-4601-bc03-cdc001ddf320"
     ],
-    "updatedAt": "2025-09-19T22:03:05.791Z"
+    "createdAt": "2023-10-14T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
   },
   {
-    "id": "c98dvj966re",
+    "id": "v58sdhudji",
     "name": "Dr. Emily Rodriguez",
     "businessName": "Central Valley Hospital",
     "deaNumber": "BR5555555",
+    "deaExpirationDate": "2025-03-15",
+    "stateLicenseNumber": "CA-HOSP-11111",
     "streetAddress": "789 Valley Way",
     "city": "Fresno",
     "state": "CA",
     "zipCode": "93720",
     "phoneNumber": "(555) 555-5555",
+    "contactName": "Dr. Emily Rodriguez",
     "reports": [
-      "623a9a03-62f8-4e11-84eb-cf56a4e41c80"
+      "c7a429e7-50b9-4339-aa53-a5b0a1e57a08",
+      "973a78f3-efa7-42d5-915e-4418f017c07e"
     ],
-    "updatedAt": "2025-09-20T19:21:04.891Z"
-  },
-  {
-    "businessName": "Test Pharmacy",
-    "deaNumber": "BT1234567",
-    "streetAddress": "123 Test St",
-    "city": "Test City",
-    "state": "CA",
-    "zipCode": "90212",
-    "phoneNumber": "(555) 888-7777",
-    "contactName": "Test User",
-    "id": "mfr86h6w31fych",
-    "name": "Test Pharmacy",
-    "reports": [],
-    "createdAt": "2025-09-19T19:21:11.048Z",
-    "updatedAt": "2025-09-20T19:28:56.311Z"
-  },
-  {
-    "businessName": "Test",
-    "deaNumber": "F34943949",
-    "streetAddress": "19319",
-    "city": "19131",
-    "state": "test",
-    "zipCode": "33186",
-    "phoneNumber": "7863381035",
-    "contactName": "John Doe",
-    "id": "mft1qpt6jzcxc5",
-    "name": "Test",
-    "reports": [],
-    "createdAt": "2025-09-21T01:56:30.378Z",
-    "updatedAt": "2025-09-21T01:56:30.378Z"
+    "createdAt": "2025-04-16T15:55:06.303Z",
+    "updatedAt": "2025-10-13T15:55:06.303Z"
   }
 ]

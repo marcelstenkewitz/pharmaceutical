@@ -22,8 +22,10 @@ export function createInventoryLine(lineDraft, nadacRow, lineNo, packages = 1) {
     packages,
     packageSize,
     itemName: lineDraft.brandName || lineDraft.itemName || "Unknown item",
+    productName: lineDraft.itemName || lineDraft.brandName || "Unknown item",
     ndc11: lineDraft.ndcNumber || lineDraft.ndc11 || undefined,
     labeler_name: lineDraft.labeler_name || "Default Labeler",
+    manufacturer: lineDraft.labeler_name || "Default Labeler",
 
     // New pricing fields
     pricePerUnit,           // Price per individual unit (from NADAC)
@@ -33,7 +35,15 @@ export function createInventoryLine(lineDraft, nadacRow, lineNo, packages = 1) {
     pricePerPackage: calculatePackagePrice(pricePerUnit, unitsPerPackage),
     totalPrice: calculateLineTotal(pricePerUnit, unitsPerPackage, packages),
 
-    dea_schedule: lineDraft.dea_schedule || undefined
+    // FDA fields for new column structure
+    dea_schedule: lineDraft.dea_schedule || null,
+    strength: lineDraft.strength || '',
+    dosageForm: lineDraft.dosage_form || lineDraft.dosageForm || '',
+    form: lineDraft.dosage_form || lineDraft.dosageForm || '',
+    finished: lineDraft.finished !== undefined ? lineDraft.finished : null,
+    brandName: lineDraft.brandName || '',
+    genericName: lineDraft.genericName || lineDraft.itemName || '',
+    route: lineDraft.route || []
   };
 }
 
