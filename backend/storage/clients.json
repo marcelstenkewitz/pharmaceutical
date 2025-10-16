@@ -1,7 +1,6 @@
 [
   {
     "id": "5e4uaniuyeq",
-    "name": "Sunrise Medical Center",
     "businessName": "Sunrise Medical Center",
     "stateLicenseNumber": "CA-PHY-12345",
     "streetAddress": "123 Medical Plaza Dr",
@@ -13,17 +12,12 @@
     "wholesaler": "McKesson Corporation",
     "accountNumber": "MCK-LA-12345",
     "invoicePercentage": 15,
-    "reports": [
-      "4533a425-6ec4-4c8d-b73d-a3038ac7479b",
-      "c5889531-08eb-469d-8590-1967239e8ea8",
-      "18fde1e9-4a3a-471a-9373-38d5aa0bfc8e"
-    ],
+    "reports": [],
     "createdAt": "2024-10-13T15:55:06.303Z",
     "updatedAt": "2025-10-16T17:00:00.000Z"
   },
   {
     "id": "voyyqpzsvf",
-    "name": "Pacific Coast Pharmacy",
     "businessName": "Pacific Coast Pharmacy",
     "stateLicenseNumber": "CA-PHARM-67890",
     "streetAddress": "456 Harbor Blvd",
@@ -35,16 +29,12 @@
     "wholesaler": "Cardinal Health",
     "accountNumber": "CAR-SF-67890",
     "invoicePercentage": 20,
-    "reports": [
-      "59de53ab-3fa2-4bb3-8d70-82df2aa792f4",
-      "d2338950-c576-4601-bc03-cdc001ddf320"
-    ],
+    "reports": [],
     "createdAt": "2023-10-14T15:55:06.303Z",
     "updatedAt": "2025-10-16T17:00:00.000Z"
   },
   {
     "id": "v58sdhudji",
-    "name": "Central Valley Hospital",
     "businessName": "Central Valley Hospital",
     "stateLicenseNumber": "CA-HOSP-11111",
     "streetAddress": "789 Valley Way",
@@ -56,10 +46,7 @@
     "wholesaler": "AmerisourceBergen",
     "accountNumber": "ABC-FR-11111",
     "invoicePercentage": 25,
-    "reports": [
-      "c7a429e7-50b9-4339-aa53-a5b0a1e57a08",
-      "973a78f3-efa7-42d5-915e-4418f017c07e"
-    ],
+    "reports": [],
     "createdAt": "2025-04-16T15:55:06.303Z",
     "updatedAt": "2025-10-16T17:00:00.000Z"
   }
