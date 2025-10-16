@@ -34,16 +34,20 @@ const Scanning = () => {
   const [editingClient, setEditingClient] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [wholesalers, setWholesalers] = useState([]);
+  const [wholesalersLoading, setWholesalersLoading] = useState(true);
 
   // Load wholesalers on component mount
   useEffect(() => {
     const fetchWholesalers = async () => {
+      setWholesalersLoading(true);
       try {
         const response = await apiService.getWholesalers();
         setWholesalers(response.wholesalers || []);
       } catch (error) {
         console.error('Failed to load wholesalers:', error);
         setWholesalers([]);
+      } finally {
+        setWholesalersLoading(false);
       }
     };
     fetchWholesalers();
@@ -182,16 +186,18 @@ const Scanning = () => {
             variant="success"
             onClick={() => setShowAddClientModal(true)}
             className="scanning-action-btn"
+            disabled={wholesalersLoading}
           >
-            Add Client
+            {wholesalersLoading ? 'Loading...' : 'Add Client'}
           </Button>
           {(localSelectedClient || selectedClient) && (
             <Button
               variant="warning"
               onClick={handleEditClient}
               className="scanning-action-btn"
+              disabled={wholesalersLoading}
             >
-              Edit Client
+              {wholesalersLoading ? 'Loading...' : 'Edit Client'}
             </Button>
           )}
           <Button
