@@ -1857,6 +1857,35 @@
         "hasFDAData": true,
         "id": "mgu21l475msn9h",
         "createdAt": "2025-10-16T23:32:26.023Z"
+      },
+      {
+        "lineNo": 2,
+        "packages": 1,
+        "packageSize": "100 tablets",
+        "itemName": "OXYCODONE HYDROCHLORIDE",
+        "productName": "OXYCODONE HYDROCHLORIDE 15 mg/1 tablet",
+        "ndc11": "10702000801",
+        "labeler_name": "KVK-TECH,INC",
+        "manufacturer": "KVK-TECH,INC",
+        "pricePerUnit": 0.18323,
+        "pricingUnit": "EA",
+        "unitsPerPackage": 100,
+        "packageUnit": "tablets",
+        "pricePerPackage": 18.323,
+        "totalPrice": 18.323,
+        "dea_schedule": "CII",
+        "strength": "15 mg/1",
+        "dosageForm": "TABLET",
+        "form": "TABLET",
+        "finished": true,
+        "brandName": "OXYCODONE HYDROCHLORIDE",
+        "genericName": "OXYCODONE HYDROCHLORIDE",
+        "route": [
+          "ORAL"
+        ],
+        "hasFDAData": true,
+        "id": "mgu22x7ud2ypb6",
+        "createdAt": "2025-10-16T23:33:28.362Z"
       }
     ],
     "items": [
@@ -1888,9 +1917,38 @@
         "hasFDAData": true,
         "id": "mgu21l475msn9h",
         "createdAt": "2025-10-16T23:32:26.023Z"
+      },
+      {
+        "lineNo": 2,
+        "packages": 1,
+        "packageSize": "100 tablets",
+        "itemName": "OXYCODONE HYDROCHLORIDE",
+        "productName": "OXYCODONE HYDROCHLORIDE 15 mg/1 tablet",
+        "ndc11": "10702000801",
+        "labeler_name": "KVK-TECH,INC",
+        "manufacturer": "KVK-TECH,INC",
+        "pricePerUnit": 0.18323,
+        "pricingUnit": "EA",
+        "unitsPerPackage": 100,
+        "packageUnit": "tablets",
+        "pricePerPackage": 18.323,
+        "totalPrice": 18.323,
+        "dea_schedule": "CII",
+        "strength": "15 mg/1",
+        "dosageForm": "TABLET",
+        "form": "TABLET",
+        "finished": true,
+        "brandName": "OXYCODONE HYDROCHLORIDE",
+        "genericName": "OXYCODONE HYDROCHLORIDE",
+        "route": [
+          "ORAL"
+        ],
+        "hasFDAData": true,
+        "id": "mgu22x7ud2ypb6",
+        "createdAt": "2025-10-16T23:33:28.362Z"
       }
     ],
-    "itemsCount": 1,
-    "updatedAt": "2025-10-16T23:32:26.023Z"
+    "itemsCount": 2,
+    "updatedAt": "2025-10-16T23:33:28.362Z"
   }
 ]

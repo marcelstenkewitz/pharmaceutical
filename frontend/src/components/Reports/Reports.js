@@ -556,6 +556,7 @@ const Reports = () => {
                         <p><strong>Address:</strong> {clientInfo.streetAddress}, {clientInfo.city}, {clientInfo.state} {clientInfo.zipCode}</p>
                       )}
                       {clientInfo?.phoneNumber && <p><strong>Phone:</strong> {clientInfo.phoneNumber}</p>}
+                      {clientInfo?.wholesaler && <p><strong>Wholesaler:</strong> {clientInfo.wholesaler}</p>}
                     </div>
                   </div>
                   
@@ -652,7 +653,6 @@ const Reports = () => {
                             <th style={{minWidth: '90px'}} className="text-end">Price/Unit</th>
                             <th style={{minWidth: '100px'}} className="text-end">Total Price</th>
                             <th style={{minWidth: '70px'}}>DEA</th>
-                            <th style={{minWidth: '120px'}} className="fw-bold">Wholesaler</th>
                             <th style={{minWidth: '150px'}} className="fw-bold">Manufacturer</th>
                             <th style={{minWidth: '200px'}} className="fw-bold">Notes for Return</th>
                           </tr>
@@ -721,7 +721,6 @@ const Reports = () => {
                                   <span className="text-muted">-</span>
                                 )}
                               </td>
-                              <td>{clientInfo?.wholesaler || 'N/A'}</td>
                               <td>{item.labeler_name || 'N/A'}</td>
                               <td className="return-instructions-modal">
                                 {getReturnInstructions(item.labeler_name)}
@@ -788,7 +787,6 @@ const Reports = () => {
                                 <span className="text-muted">Not Controlled</span>
                               )}
                             </div>
-                            <div className="mb-1"><strong>Wholesaler:</strong> {clientInfo?.wholesaler || 'N/A'}</div>
                             <div className="mb-1"><strong>Manufacturer:</strong> {item.labeler_name || 'N/A'}</div>
                             <div><strong>Return Notes:</strong> {getReturnInstructions(item.labeler_name)}</div>
                           </div>
