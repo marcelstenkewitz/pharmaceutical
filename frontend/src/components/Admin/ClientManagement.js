@@ -19,6 +19,7 @@ const ClientManagement = () => {
   } = useContext(ClientContext);
 
   const [wholesalers, setWholesalers] = useState([]);
+  const [wholesalersLoaded, setWholesalersLoaded] = useState(false);
 
   // Load wholesalers on component mount
   useEffect(() => {
@@ -32,6 +33,8 @@ const ClientManagement = () => {
       } catch (error) {
         console.error('Failed to load wholesalers:', error);
         setWholesalers([]);
+      } finally {
+        setWholesalersLoaded(true);
       }
     };
     fetchWholesalers();
@@ -111,6 +114,21 @@ const ClientManagement = () => {
     itemIdField: "id",
     onRowClick: (client) => navigate(`/reports/client/${client.id}`)
   }), [wholesalers, loadClients, createClient, updateClient, deleteClient, navigate]);
+
+  // Don't render DataTable until wholesalers are loaded to prevent form initialization issues
+  if (!wholesalersLoaded) {
+    return (
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary mb-3" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <div>
+          <h5>Loading Client Management...</h5>
+          <p className="text-muted">Preparing form data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <DataTable

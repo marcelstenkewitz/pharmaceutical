@@ -18,13 +18,15 @@ class ClientRepository extends BaseRepository {
       typeof client === 'object' &&
       typeof client.id === 'string' &&
       typeof client.businessName === 'string' &&
-      typeof client.deaNumber === 'string'
+      // DEA number is optional
+      (client.deaNumber === undefined || client.deaNumber === null || typeof client.deaNumber === 'string')
     );
   }
 
   validateDEANumber(deaNumber) {
+    // DEA number is now optional
     if (!deaNumber) {
-      return { isValid: false, error: 'DEA number is required' };
+      return { isValid: true, error: null };
     }
 
     const dea = deaNumber.toString().trim();
@@ -37,16 +39,22 @@ class ClientRepository extends BaseRepository {
   }
 
   create(clientData) {
-    const deaValidation = this.validateDEANumber(clientData.deaNumber);
-    if (!deaValidation.isValid) {
-      throw new Error(deaValidation.error);
+    // Only validate DEA number if provided
+    if (clientData.deaNumber) {
+      const deaValidation = this.validateDEANumber(clientData.deaNumber);
+      if (!deaValidation.isValid) {
+        throw new Error(deaValidation.error);
+      }
     }
 
     const clients = this.readData();
 
-    const existingClient = clients.find(c => c.deaNumber === clientData.deaNumber);
-    if (existingClient) {
-      throw new Error(`Client with DEA number ${clientData.deaNumber} already exists`);
+    // Only check for duplicate DEA number if one is provided
+    if (clientData.deaNumber) {
+      const existingClient = clients.find(c => c.deaNumber === clientData.deaNumber);
+      if (existingClient) {
+        throw new Error(`Client with DEA number ${clientData.deaNumber} already exists`);
+      }
     }
 
     const newClient = {
