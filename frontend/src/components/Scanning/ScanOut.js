@@ -1,7 +1,7 @@
 // src/components/Scanning/ScanOut.js
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useCallback, useRef } from "react";
 import Wrapper from "../Layout/Wrapper";
-import { Alert, Button, Form } from "react-bootstrap";
+import { Alert, Button } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import { useZxingScanner } from "./useZxingScanner";
 import { createNdcService } from "../../services/NdcService";
@@ -9,7 +9,6 @@ import { createPriceService } from "../../services/PriceService";
 import { FDAResult } from "../../models/FdaResultModel";
 import { createInventoryLine, validateInventoryLine } from "../../models/PharmInventoryModel";
 import { ClientContext } from "../../context/ClientContext";
-import { calculateLineTotal, calculatePackagePrice, parsePackageSize } from "../../services/PricingUtils";
 import CurrentItemsTable from "./CurrentItemsTable";
 import ManualEntryModal from "./ManualEntryModal";
 import apiService from "../../services/ApiService";
@@ -20,9 +19,9 @@ const ndcService = createNdcService();
 const priceService = createPriceService();
 
 const ScanOut = () => {
-  const { 
-    selectedClient, 
-    currentReport, 
+  const {
+    selectedClient,
+    currentReport,
     sessionReport,
     createNewReport,
     addLineItemToReport: addLineItemToReportContext,
@@ -31,25 +30,25 @@ const ScanOut = () => {
     loadClients,
     setCurrentReport
   } = useContext(ClientContext);
-  
+
   const { clientId: urlClientId, reportId: urlReportId } = useParams();
   const navigate = useNavigate();
-  
+
   const [barcode, setBarcode] = useState("");
   const [result, setResult] = useState(null);
-  const [editLine, setEditLine] = useState(null);
   const [submitStatus, setSubmitStatus] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [showManualEntryModal, setShowManualEntryModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Use ref to track last processed barcode to prevent duplicates
+  const lastProcessedBarcodeRef = useRef(null);
 
   // Function to clear scan state (for manual clearing or resetting)
   const clearScanState = () => {
     console.debug(`[ScanOut] Clearing scan state`);
     setBarcode("");
     setResult(null);
-    setEditLine(null);
     setSubmitStatus(null);
     setIsProcessing(false);
   };
@@ -116,29 +115,27 @@ const ScanOut = () => {
     }
   }, [selectedClient, currentReport]);
 
-  // Handle submit of Form222 line to selected client
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!editLine || !effectiveClientId) {
+  // Auto-add item to report (no form, direct add)
+  const autoAddItem = useCallback(async (lineItem) => {
+    if (!lineItem || !effectiveClientId) {
       setSubmitStatus({ ok: false, msg: "No item to submit or no client selected." });
       return;
     }
 
     // Validate the line item
-    const validation = validateInventoryLine(editLine);
+    const validation = validateInventoryLine(lineItem);
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
       setSubmitStatus({ ok: false, msg: `Validation failed: ${validation.errors.join(', ')}` });
       return;
     }
 
-    setSubmitting(true);
     setSubmitStatus(null);
     setValidationErrors([]);
 
     try {
       let targetReportId = sessionReport?.id || currentReport?.id;
-      
+
       // Get the client ID for API calls - use effectiveClientId from URL or context
       const clientId = effectiveClientId;
 
@@ -152,45 +149,45 @@ const ScanOut = () => {
       }
 
       // Add the line item using context method
-      console.log('Adding line item to report:', targetReportId);
-      const result = await addLineItemToReportContext(clientId, editLine, targetReportId);
+      console.log('Auto-adding line item to report:', targetReportId);
+      const result = await addLineItemToReportContext(clientId, lineItem, targetReportId);
       console.log('Line item add result:', result);
-      console.log('Current report after add:', currentReport);
 
       // Only show success if we got a valid result
       if (result && result.lineItem) {
-        setSubmitStatus({ ok: true, msg: "Item added to the report successfully." });
-        setEditLine(null);
+        setSubmitStatus({ ok: true, msg: "✅ Item automatically added to report" });
         setBarcode("");
-        console.log('Item successfully added and form cleared');
-        console.log('Final current report state:', currentReport);
+        setResult(null);
+        console.log('Item successfully auto-added and scan cleared');
       } else {
         console.log('No valid result received:', result);
         setSubmitStatus({ ok: false, msg: "Item was not added to the report. Please try again." });
       }
     } catch (err) {
-      console.error('Submit error:', err.message || err);
+      console.error('Auto-add error:', err.message || err);
       if (err.errors && err.errors.length > 0) {
         setValidationErrors(err.errors);
         setSubmitStatus({ ok: false, msg: `Server validation failed: ${err.errors.join(', ')}` });
       } else {
         setSubmitStatus({ ok: false, msg: err.message || "Failed to add item to report." });
       }
-    } finally {
-      setSubmitting(false);
     }
-  };
+  }, [effectiveClientId, sessionReport, currentReport, createNewReport, addLineItemToReportContext]);
 
   // Handle manual form submission from modal
   const handleManualSubmit = async (inventoryLineData) => {
     // The data is already in the correct format from formDataToInventoryLine
-    // Just mark it as a manual entry and set it as the edit line
+    // Mark it as a manual entry and auto-add it
     const manualLine = {
       ...inventoryLineData,
       isManualEntry: true
     };
 
-    setEditLine(manualLine);
+    // Close the manual entry modal
+    setShowManualEntryModal(false);
+
+    // Auto-add the manual entry
+    await autoAddItem(manualLine);
   };
 
   const { control, isRunning, error } = useZxingScanner(
@@ -236,14 +233,23 @@ const ScanOut = () => {
       if (!barcode) {
         console.log(`[ScanOut] 🔄 No barcode, clearing state`);
         setResult(null);
-        setEditLine(null);
         setSubmitStatus(null);
         setValidationErrors([]);
         setIsProcessing(false);
+        lastProcessedBarcodeRef.current = null;
+        return;
+      }
+
+      // Prevent duplicate processing of the same barcode
+      if (lastProcessedBarcodeRef.current === barcode) {
+        console.log(`[ScanOut] ⚠️ Barcode "${barcode}" was already processed, skipping duplicate`);
         return;
       }
 
       console.log(`[ScanOut] 🔄 Processing barcode: "${barcode}"`);
+      // Mark this barcode as being processed
+      lastProcessedBarcodeRef.current = barcode;
+
       // Clear previous submit status when processing new barcode
       setSubmitStatus(null);
       setValidationErrors([]);
@@ -284,25 +290,26 @@ const ScanOut = () => {
             1, // Default package count to 1
             1  // Default total quantity ordered to 1
           );
-          
+
           // Mark as manual entry
           manualLine.isManualEntry = true;
-          
-          setEditLine(manualLine);
+
           setResult({ valid: true, message: msg });
           setIsProcessing(false);
+
+          // Auto-add the cached manual entry
+          await autoAddItem(manualLine);
           return;
         }
         
         // If no manual entry found, proceed with NDC normalization
         const norm = ndcService.normalizeScan(barcode);
         if (!norm.ok) {
-          setResult({ 
-            valid: false, 
-            message: norm.reason || "Unrecognized barcode format.", 
+          setResult({
+            valid: false,
+            message: norm.reason || "Unrecognized barcode format.",
             allowManualEntry: true  // Allow manual entry even for invalid barcodes
           });
-          setEditLine(null);
           setIsProcessing(false);
           return;
         }
@@ -393,7 +400,9 @@ const ScanOut = () => {
           formLine.dea_schedule = fdaResult.dea_schedule || fda.dea_schedule || null;
           // Mark as FDA verified item - this will lock NDC field from editing
           formLine.hasFDAData = true;
-          setEditLine(formLine);
+
+          setResult({ valid: true, message: msg });
+          setIsProcessing(false);
 
           // Auto-create manufacturer from FDA labeler_name
           if (fdaResult.labeler_name) {
@@ -406,17 +415,18 @@ const ScanOut = () => {
               console.warn(`[ScanOut] ⚠️ Failed to auto-create manufacturer: ${error.message}`);
             }
           }
+
+          // Auto-add the FDA verified item
+          await autoAddItem(formLine);
         } else {
           msg += `\nFDA: Not found or not recognized.`;
-          setEditLine(null);
+          setResult({ valid: true, message: msg, allowManualEntry: !fda.ok });
+          setIsProcessing(false);
         }
-        setResult({ valid: true, message: msg, allowManualEntry: !fda.ok });
-        setIsProcessing(false);
       } catch (e) {
         if (!ignore) {
           msg += `\nError: ${e.message}`;
           setResult({ valid: false, message: msg, allowManualEntry: true }); // Allow manual entry on API errors with valid NDC/GTIN
-          setEditLine(null);
           setIsProcessing(false);
         }
       }
@@ -424,34 +434,13 @@ const ScanOut = () => {
 
     fetchData();
 
-    return () => { 
-      ignore = true; 
+    return () => {
+      ignore = true;
       setIsProcessing(false);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barcode]);
 
-  // useEffect for automatic price recalculation when editing fields
-  useEffect(() => {
-    const pricePerUnit = parseFloat(editLine?.pricePerUnit) || 0;
-    const unitsPerPackage = parseInt(editLine?.unitsPerPackage) || 1;
-    const packages = parseInt(editLine?.packages) || 1;
-    const currentPricePerPackage = editLine?.pricePerPackage || 0;
-    const currentTotalPrice = editLine?.totalPrice || 0;
-
-    if (pricePerUnit && unitsPerPackage && packages) {
-      const pricePerPackage = calculatePackagePrice(pricePerUnit, unitsPerPackage);
-      const totalPrice = calculateLineTotal(pricePerUnit, unitsPerPackage, packages);
-
-      // Only update if the calculated values are different to avoid infinite loops
-      if (currentPricePerPackage !== pricePerPackage || currentTotalPrice !== totalPrice) {
-        setEditLine(prev => ({
-          ...prev,
-          pricePerPackage,
-          totalPrice
-        }));
-      }
-    }
-  }, [editLine?.pricePerUnit, editLine?.unitsPerPackage, editLine?.packages, editLine?.pricePerPackage, editLine?.totalPrice]);
 
   return (
     <Wrapper centerText={false}>
@@ -580,194 +569,24 @@ const ScanOut = () => {
           onSubmit={handleManualSubmit}
           initialBarcode={barcode}
           title="Manual Entry - Form 222 Line"
-          submitButtonText="Create Line Item"
+          submitButtonText="Add to Report"
         />
 
+        {submitStatus && (
+          <Alert variant={submitStatus.ok ? "success" : "info"} className="mt-3">
+            {submitStatus.msg}
+          </Alert>
+        )}
 
-        {editLine && (
-          <div className="manual-entry-container">
-            <Alert variant="info" className="text-center">
-              <Alert.Heading>Add Inventory Line</Alert.Heading>
-              <form className="manual-entry-form">
-                {Object.entries(editLine)
-                  .filter(([key]) => key !== 'lineNo' && key !== 'packageUnit' && key !== 'hasFDAData')
-                  .map(([key, value]) => {
-                    // Map field names to user-friendly labels
-                    const fieldLabels = {
-                      packages: 'Quantity',
-                      packageSize: 'Package Size',
-                      itemName: 'Item Name',
-                      ndc11: 'NDC-11',
-                      labeler_name: 'Labeler',
-                      dea_schedule: 'DEA Schedule',
-                      pricePerUnit: 'Price per Unit',
-                      pricingUnit: 'Pricing Unit',
-                      unitsPerPackage: 'Units per Package',
-                      packageUnit: 'Package Unit',
-                      pricePerPackage: 'Price per Package',
-                      totalPrice: 'Total Price',
-                      isManualEntry: 'Manual Entry'
-                    };
-                    const label = fieldLabels[key] || key;
-                    
-                    // Special handling for pricePerUnit to show it's required when missing
-                    const isRequired = key === 'pricePerUnit' && (!value || value === 0);
-
-                    // Read-only fields that shouldn't be editable
-                    const readOnlyFields = ['pricingUnit', 'pricePerPackage', 'totalPrice'];
-                    // Lock NDC field if this item has FDA data
-                    if (key === 'ndc11' && editLine?.hasFDAData) {
-                      readOnlyFields.push('ndc11');
-                    }
-                    const isReadOnly = readOnlyFields.includes(key);
-
-                    // Special rendering for packageSize - split into two fields
-                    if (key === 'packageSize') {
-                      const parsed = parsePackageSize(value);
-                      const packageCount = parsed?.count || 1;
-                      const packageUnit = parsed?.unit || 'units';
-
-                      return (
-                        <div key={key}>
-                          <div className="form-field-row">
-                            <label htmlFor={`edit-${key}-count`} className="form-label-fixed">
-                              Package Size *:
-                            </label>
-                            <input
-                              id={`edit-${key}-count`}
-                              type="number"
-                              value={packageCount}
-                              onChange={e => {
-                                const inputValue = e.target.value;
-                                const newCount = inputValue === '' ? '' : parseInt(inputValue) || 0;
-                                const newPackageSize = inputValue === '' ? '' : `${newCount || 1} ${packageUnit}`;
-                                setEditLine(l => ({
-                                  ...l,
-                                  packageSize: newPackageSize,
-                                  unitsPerPackage: newCount || 1,
-                                  packageUnit
-                                }));
-                              }}
-                              className="scan-input-flex"
-                              min="1"
-                            />
-                          </div>
-                          <div className="form-field-row-with-margin">
-                            <label htmlFor={`edit-${key}-unit`} className="form-label-fixed">
-                              Package Unit *:
-                            </label>
-                            <input
-                              id={`edit-${key}-unit`}
-                              type="text"
-                              value={packageUnit}
-                              onChange={e => {
-                                const newUnit = e.target.value;
-                                const newPackageSize = newUnit === '' ? '' : `${packageCount || 1} ${newUnit || 'units'}`;
-                                setEditLine(l => ({
-                                  ...l,
-                                  packageSize: newPackageSize,
-                                  packageUnit: newUnit
-                                }));
-                              }}
-                              className="scan-input-flex"
-                              placeholder="tablets"
-                            />
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div key={key}>
-                        <div className="form-field-row">
-                          <label htmlFor={`edit-${key}`} className="form-label-fixed">
-                            {label}{isRequired && ' *'}:
-                          </label>
-                          <input
-                            id={`edit-${key}`}
-                            type={typeof value === 'number' ? 'number' : 'text'}
-                            value={value ?? ''}
-                            onChange={e => {
-                              if (!isReadOnly) {
-                                const v = typeof value === 'number' ? Number(e.target.value) : e.target.value;
-
-                                // Validate NDC field using centralized validation
-                                if (key === 'ndc11') {
-                                  const isManual = editLine?.isManualEntry;
-                                  let validation;
-                                  if (isManual || ndcService.utils.isCustomCode(v)) {
-                                    validation = ndcService.utils.validateManualCode(v);
-                                  } else {
-                                    validation = ndcService.utils.validateStandardNDC(v);
-                                  }
-
-                                  // Store validation result (could be used for styling)
-                                  setEditLine(l => ({
-                                    ...l,
-                                    [key]: v,
-                                    [`${key}_validation`]: validation
-                                  }));
-                                } else {
-                                  setEditLine(l => ({ ...l, [key]: v }));
-                                }
-                              }
-                            }}
-                            readOnly={isReadOnly}
-                            className={(() => {
-                              if (key === 'ndc11' && editLine?.[`${key}_validation`] && !editLine[`${key}_validation`].isValid) {
-                                return 'scan-input-error';
-                              }
-                              if (isReadOnly) {
-                                return 'scan-input-readonly';
-                              }
-                              return isRequired ? 'scan-input-required' : 'scan-input-optional';
-                            })()}
-                            placeholder={isRequired ? 'Enter price per unit' : ''}
-                          />
-                        </div>
-                        {/* Show validation error message for NDC field */}
-                        {key === 'ndc11' && editLine?.[`${key}_validation`] && !editLine[`${key}_validation`].isValid && (
-                          <div className="validation-error-message">
-                            {editLine[`${key}_validation`].message}
-                          </div>
-                        )}
-                        {/* Show FDA lock message for NDC field */}
-                        {key === 'ndc11' && editLine?.hasFDAData && (
-                          <Form.Text className="text-muted form-text-spacing">
-                            🔒 NDC locked - FDA verified item
-                          </Form.Text>
-                        )}
-                      </div>
-                    );
-                  })}
-              </form>
-            </Alert>
-            <form onSubmit={handleSubmit} className="main-form">
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={submitting}
-                className="submit-button-container"
-              >
-                {submitting ? "Adding to Report..." : "Add to Report"}
-              </Button>
-              {submitStatus && (
-                <Alert variant={submitStatus.ok ? "success" : "danger"} className="alert-spacing-top">
-                  {submitStatus.msg}
-                </Alert>
-              )}
-              {validationErrors.length > 0 && (
-                <Alert variant="warning" className="alert-spacing-top">
-                  <Alert.Heading>Validation Errors:</Alert.Heading>
-                  <ul className="mb-0">
-                    {validationErrors.map((error, index) => (
-                      <li key={index}>{error}</li>
-                    ))}
-                  </ul>
-                </Alert>
-              )}
-            </form>
-          </div>
+        {validationErrors.length > 0 && (
+          <Alert variant="warning" className="mt-3">
+            <Alert.Heading>Validation Errors:</Alert.Heading>
+            <ul className="mb-0">
+              {validationErrors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </Alert>
         )}
             
             <CurrentItemsTable

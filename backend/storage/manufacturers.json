@@ -70,5 +70,17 @@
     "website": "www.rdcrx.com",
     "createdAt": "2025-10-13T15:55:06.303Z",
     "updatedAt": "2025-10-13T15:55:06.303Z"
+  },
+  {
+    "name": "KVK-TECH,INC",
+    "id": "mgu1x95ng2ylmp",
+    "address": null,
+    "city": null,
+    "state": null,
+    "zipCode": null,
+    "phone": null,
+    "website": null,
+    "createdAt": "2025-10-16T23:29:03.899Z",
+    "updatedAt": "2025-10-16T23:32:25.928Z"
   }
 ]

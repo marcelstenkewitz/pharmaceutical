@@ -10,9 +10,12 @@
     "phoneNumber": "(555) 123-4567",
     "contactName": "Dr. Sarah Johnson",
     "invoicePercentage": 15,
-    "reports": [],
+    "reports": [
+      "mgu1x971w855po",
+      "mgu21l2llitsog"
+    ],
     "createdAt": "2024-10-13T15:55:06.303Z",
-    "updatedAt": "2025-10-16T17:00:00.000Z",
+    "updatedAt": "2025-10-16T23:32:25.967Z",
     "deaNumber": null,
     "deaExpirationDate": null,
     "stateLicenseExpirationDate": null,

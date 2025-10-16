@@ -5,6 +5,7 @@ import { calculateLineTotal, calculatePackagePrice, parsePackageSize } from '../
 import { createNdcService } from '../../services/NdcService';
 import GenerateForm222Button from '../Reports/GenerateForm222Button';
 import GenerateInventoryButton from '../Reports/GenerateInventoryButton';
+import GenerateInvoiceButton from '../Reports/GenerateInvoiceButton';
 import './current-items-table.css';
 
 
@@ -199,24 +200,35 @@ const CurrentItemsTable = ({
             <h5 className="mb-0">Current Items in Report ({currentReport.items.length})</h5>
             {currentReport.id && clientId && currentReport.items.length > 0 && (
               <div className="d-flex gap-2">
-                <GenerateInventoryButton 
+                <GenerateInventoryButton
                   clientId={clientId}
                   reportId={currentReport.id}
-                  report={{ 
-                    id: currentReport.id, 
+                  report={{
+                    id: currentReport.id,
                     lineItems: currentReport.items,
-                    client: selectedClient 
+                    client: selectedClient
                   }}
                   variant="outline-success"
                   size="sm"
                 />
-                <GenerateForm222Button 
+                <GenerateInvoiceButton
                   clientId={clientId}
                   reportId={currentReport.id}
-                  report={{ 
-                    id: currentReport.id, 
+                  report={{
+                    id: currentReport.id,
                     lineItems: currentReport.items,
-                    client: selectedClient 
+                    client: selectedClient
+                  }}
+                  variant="outline-info"
+                  size="sm"
+                />
+                <GenerateForm222Button
+                  clientId={clientId}
+                  reportId={currentReport.id}
+                  report={{
+                    id: currentReport.id,
+                    lineItems: currentReport.items,
+                    client: selectedClient
                   }}
                   variant="outline-danger"
                   size="sm"

@@ -1750,5 +1750,147 @@
       }
     ],
     "itemsCount": 6
+  },
+  {
+    "id": "mgu1x971w855po",
+    "name": "Report 2025-10-16T23:29:03.949Z",
+    "clientId": "5e4uaniuyeq",
+    "createdAt": "2025-10-16T23:29:03.949Z",
+    "timestamp": "2025-10-16T23:29:03.949Z",
+    "lineItems": [
+      {
+        "lineNo": 1,
+        "packages": 1,
+        "packageSize": "100 tablets",
+        "itemName": "OXYCODONE HYDROCHLORIDE",
+        "productName": "OXYCODONE HYDROCHLORIDE 15 mg/1 tablet",
+        "ndc11": "10702000801",
+        "labeler_name": "KVK-TECH,INC",
+        "manufacturer": "KVK-TECH,INC",
+        "pricePerUnit": 0.18323,
+        "pricingUnit": "EA",
+        "unitsPerPackage": 100,
+        "packageUnit": "tablets",
+        "pricePerPackage": 18.323,
+        "totalPrice": 18.323,
+        "dea_schedule": "CII",
+        "strength": "15 mg/1",
+        "dosageForm": "TABLET",
+        "form": "TABLET",
+        "finished": true,
+        "brandName": "OXYCODONE HYDROCHLORIDE",
+        "genericName": "OXYCODONE HYDROCHLORIDE",
+        "route": [
+          "ORAL"
+        ],
+        "hasFDAData": true,
+        "id": "mgu1xcf5h9o147",
+        "createdAt": "2025-10-16T23:29:08.129Z"
+      }
+    ],
+    "items": [
+      {
+        "lineNo": 1,
+        "packages": 1,
+        "packageSize": "100 tablets",
+        "itemName": "OXYCODONE HYDROCHLORIDE",
+        "productName": "OXYCODONE HYDROCHLORIDE 15 mg/1 tablet",
+        "ndc11": "10702000801",
+        "labeler_name": "KVK-TECH,INC",
+        "manufacturer": "KVK-TECH,INC",
+        "pricePerUnit": 0.18323,
+        "pricingUnit": "EA",
+        "unitsPerPackage": 100,
+        "packageUnit": "tablets",
+        "pricePerPackage": 18.323,
+        "totalPrice": 18.323,
+        "dea_schedule": "CII",
+        "strength": "15 mg/1",
+        "dosageForm": "TABLET",
+        "form": "TABLET",
+        "finished": true,
+        "brandName": "OXYCODONE HYDROCHLORIDE",
+        "genericName": "OXYCODONE HYDROCHLORIDE",
+        "route": [
+          "ORAL"
+        ],
+        "hasFDAData": true,
+        "id": "mgu1xcf5h9o147",
+        "createdAt": "2025-10-16T23:29:08.129Z"
+      }
+    ],
+    "itemsCount": 1,
+    "updatedAt": "2025-10-16T23:31:26.460Z"
+  },
+  {
+    "id": "mgu21l2llitsog",
+    "name": "Report 2025-10-16T23:32:25.965Z",
+    "clientId": "5e4uaniuyeq",
+    "createdAt": "2025-10-16T23:32:25.965Z",
+    "timestamp": "2025-10-16T23:32:25.965Z",
+    "lineItems": [
+      {
+        "lineNo": 1,
+        "packages": 1,
+        "packageSize": "100 tablets",
+        "itemName": "OXYCODONE HYDROCHLORIDE",
+        "productName": "OXYCODONE HYDROCHLORIDE 15 mg/1 tablet",
+        "ndc11": "10702000801",
+        "labeler_name": "KVK-TECH,INC",
+        "manufacturer": "KVK-TECH,INC",
+        "pricePerUnit": 0.18323,
+        "pricingUnit": "EA",
+        "unitsPerPackage": 100,
+        "packageUnit": "tablets",
+        "pricePerPackage": 18.323,
+        "totalPrice": 18.323,
+        "dea_schedule": "CII",
+        "strength": "15 mg/1",
+        "dosageForm": "TABLET",
+        "form": "TABLET",
+        "finished": true,
+        "brandName": "OXYCODONE HYDROCHLORIDE",
+        "genericName": "OXYCODONE HYDROCHLORIDE",
+        "route": [
+          "ORAL"
+        ],
+        "hasFDAData": true,
+        "id": "mgu21l475msn9h",
+        "createdAt": "2025-10-16T23:32:26.023Z"
+      }
+    ],
+    "items": [
+      {
+        "lineNo": 1,
+        "packages": 1,
+        "packageSize": "100 tablets",
+        "itemName": "OXYCODONE HYDROCHLORIDE",
+        "productName": "OXYCODONE HYDROCHLORIDE 15 mg/1 tablet",
+        "ndc11": "10702000801",
+        "labeler_name": "KVK-TECH,INC",
+        "manufacturer": "KVK-TECH,INC",
+        "pricePerUnit": 0.18323,
+        "pricingUnit": "EA",
+        "unitsPerPackage": 100,
+        "packageUnit": "tablets",
+        "pricePerPackage": 18.323,
+        "totalPrice": 18.323,
+        "dea_schedule": "CII",
+        "strength": "15 mg/1",
+        "dosageForm": "TABLET",
+        "form": "TABLET",
+        "finished": true,
+        "brandName": "OXYCODONE HYDROCHLORIDE",
+        "genericName": "OXYCODONE HYDROCHLORIDE",
+        "route": [
+          "ORAL"
+        ],
+        "hasFDAData": true,
+        "id": "mgu21l475msn9h",
+        "createdAt": "2025-10-16T23:32:26.023Z"
+      }
+    ],
+    "itemsCount": 1,
+    "updatedAt": "2025-10-16T23:32:26.023Z"
   }
 ]
