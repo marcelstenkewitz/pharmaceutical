@@ -205,11 +205,11 @@ const FormModal = ({
           ))}
         </Form>
       </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>
+      <Modal.Footer className="modal-footer-mobile">
+        <Button variant="secondary" onClick={onHide} className="modal-footer-btn">
           Cancel
         </Button>
-        <Button variant="primary" onClick={handleSubmit}>
+        <Button variant="primary" onClick={handleSubmit} className="modal-footer-btn">
           {submitButtonText || defaultSubmitText}
         </Button>
       </Modal.Footer>

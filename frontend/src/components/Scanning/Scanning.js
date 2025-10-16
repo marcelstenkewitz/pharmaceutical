@@ -66,6 +66,9 @@ const Scanning = () => {
   useEffect(() => {
     if (selectedClient?.id) {
       setLocalSelectedClient(selectedClient.id);
+    } else if (selectedClient === null) {
+      // Clear local selection when context clears selection
+      setLocalSelectedClient("");
     }
   }, [selectedClient]);
 
@@ -121,7 +124,10 @@ const Scanning = () => {
       setShowEditClientModal(true);
       clearError();
     } else {
-      alert("Unable to find client data for editing.");
+      // Client not found - clear selection and prompt user
+      alert("The selected client no longer exists. Please select a client from the dropdown.");
+      setLocalSelectedClient("");
+      setSelectedClient(null);
     }
   };
 
