@@ -25,6 +25,9 @@ const ClientManagement = () => {
     const fetchWholesalers = async () => {
       try {
         const response = await apiService.getWholesalers();
+        console.log('[ClientManagement] Wholesalers API response:', response);
+        console.log('[ClientManagement] Wholesalers array:', response.wholesalers);
+        console.log('[ClientManagement] Wholesalers count:', response.wholesalers?.length || 0);
         setWholesalers(response.wholesalers || []);
       } catch (error) {
         console.error('Failed to load wholesalers:', error);

@@ -42,6 +42,9 @@ const Scanning = () => {
       setWholesalersLoading(true);
       try {
         const response = await apiService.getWholesalers();
+        console.log('Wholesalers API response:', response);
+        console.log('Wholesalers array:', response.wholesalers);
+        console.log('Wholesalers count:', response.wholesalers?.length || 0);
         setWholesalers(response.wholesalers || []);
       } catch (error) {
         console.error('Failed to load wholesalers:', error);
