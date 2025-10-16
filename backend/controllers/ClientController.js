@@ -51,7 +51,6 @@ class ClientController extends BaseController {
    * Create a new client
    * @param {Object} clientData - The client data
    * @param {string} clientData.businessName - The business name
-   * @param {string} clientData.deaNumber - The DEA number
    * @param {string} clientData.streetAddress - The street address
    * @param {string} clientData.city - The city
    * @param {string} clientData.state - The state
@@ -60,12 +59,16 @@ class ClientController extends BaseController {
    * @param {string} [clientData.contactName] - The contact name
    * @param {string} [clientData.labelerName] - The labeler name
    * @param {string} [clientData.returnInstructions] - The return instructions
+   * @param {string} [clientData.wholesaler] - The wholesaler name
+   * @param {string} [clientData.accountNumber] - The account number with wholesaler
+   * @param {number} [clientData.invoicePercentage] - The invoice percentage
+   * @param {string} [clientData.stateLicenseNumber] - The state license number
    * @returns {Object} Response with created client
    */
   createClient(clientData) {
     try {
       // Validate required fields
-      const requiredFields = ['businessName', 'deaNumber', 'streetAddress', 'city', 'state', 'zipCode'];
+      const requiredFields = ['businessName', 'streetAddress', 'city', 'state', 'zipCode'];
       const validationError = this.validateRequiredFields(clientData, requiredFields);
       if (validationError) {
         return validationError;
@@ -73,7 +76,6 @@ class ClientController extends BaseController {
 
       const {
         businessName,
-        deaNumber,
         streetAddress,
         city,
         state,
@@ -81,12 +83,15 @@ class ClientController extends BaseController {
         phoneNumber = '',
         contactName = '',
         labelerName = 'N/A',
-        returnInstructions = ''
+        returnInstructions = '',
+        wholesaler = null,
+        accountNumber = null,
+        invoicePercentage = null,
+        stateLicenseNumber = null
       } = clientData;
 
       const newClientData = {
         businessName,
-        deaNumber,
         streetAddress,
         city,
         state,
@@ -94,7 +99,11 @@ class ClientController extends BaseController {
         phoneNumber,
         contactName,
         labelerName,
-        returnInstructions
+        returnInstructions,
+        wholesaler,
+        accountNumber,
+        invoicePercentage,
+        stateLicenseNumber
       };
 
       const client = this.repos.clients.create(newClientData);
@@ -123,7 +132,6 @@ class ClientController extends BaseController {
 
       const allowedFields = [
         'businessName',
-        'deaNumber',
         'streetAddress',
         'city',
         'state',
@@ -131,7 +139,11 @@ class ClientController extends BaseController {
         'phoneNumber',
         'contactName',
         'labelerName',
-        'returnInstructions'
+        'returnInstructions',
+        'wholesaler',
+        'accountNumber',
+        'invoicePercentage',
+        'stateLicenseNumber'
       ];
 
       // Filter updates to only include allowed fields
