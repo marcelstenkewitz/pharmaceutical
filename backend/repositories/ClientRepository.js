@@ -7,7 +7,62 @@ class ClientRepository extends BaseRepository {
   }
 
   getDefaultData() {
-    return [];
+    return [
+      {
+        id: "5e4uaniuyeq",
+        businessName: "Sunrise Medical Center",
+        name: "Sunrise Medical Center",
+        stateLicenseNumber: "CA-PHY-12345",
+        streetAddress: "123 Medical Plaza Dr",
+        city: "Los Angeles",
+        state: "CA",
+        zipCode: "90210",
+        phoneNumber: "(555) 123-4567",
+        contactName: "Dr. Sarah Johnson",
+        wholesaler: "McKesson Corporation",
+        accountNumber: "MCK-LA-12345",
+        invoicePercentage: 15,
+        reports: [],
+        createdAt: "2024-10-13T15:55:06.303Z",
+        updatedAt: "2025-10-16T17:00:00.000Z"
+      },
+      {
+        id: "voyyqpzsvf",
+        businessName: "Pacific Coast Pharmacy",
+        name: "Pacific Coast Pharmacy",
+        stateLicenseNumber: "CA-PHARM-67890",
+        streetAddress: "456 Harbor Blvd",
+        city: "San Francisco",
+        state: "CA",
+        zipCode: "94102",
+        phoneNumber: "(555) 987-6543",
+        contactName: "Dr. Michael Chen",
+        wholesaler: "Cardinal Health",
+        accountNumber: "CAR-SF-67890",
+        invoicePercentage: 20,
+        reports: [],
+        createdAt: "2023-10-14T15:55:06.303Z",
+        updatedAt: "2025-10-16T17:00:00.000Z"
+      },
+      {
+        id: "v58sdhudji",
+        businessName: "Central Valley Hospital",
+        name: "Central Valley Hospital",
+        stateLicenseNumber: "CA-HOSP-11111",
+        streetAddress: "789 Valley Way",
+        city: "Fresno",
+        state: "CA",
+        zipCode: "93720",
+        phoneNumber: "(555) 555-5555",
+        contactName: "Dr. Emily Rodriguez",
+        wholesaler: "AmerisourceBergen",
+        accountNumber: "ABC-FR-11111",
+        invoicePercentage: 25,
+        reports: [],
+        createdAt: "2025-04-16T15:55:06.303Z",
+        updatedAt: "2025-10-16T17:00:00.000Z"
+      }
+    ];
   }
 
   validateData(data) {
