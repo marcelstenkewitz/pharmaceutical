@@ -1,5 +1,6 @@
 const BaseRepository = require('./base/BaseRepository');
 const { migrateClients, logMigrationResult } = require('../utils/migrations');
+const { validateDEANumberOptional } = require('../utils/deaValidator');
 
 class ClientRepository extends BaseRepository {
   constructor(dataDir, reportRepository) {
@@ -39,7 +40,10 @@ class ClientRepository extends BaseRepository {
         id: "5e4uaniuyeq",
         businessName: "Sunrise Medical Center",
         name: "Sunrise Medical Center",
+        deaNumber: "AS1234567",
+        deaExpirationDate: "2026-12-31",
         stateLicenseNumber: "CA-PHY-12345",
+        stateLicenseExpirationDate: "2026-06-30",
         streetAddress: "123 Medical Plaza Dr",
         city: "Los Angeles",
         state: "CA",
@@ -47,7 +51,8 @@ class ClientRepository extends BaseRepository {
         phoneNumber: "(555) 123-4567",
         contactName: "Dr. Sarah Johnson",
         wholesaler: "McKesson Corporation",
-        accountNumber: "MCK-LA-12345",
+        wholesalerAccountNumber: "MCK-LA-12345",
+        wholesalerAddress: "8741 Landmark Rd, Richmond, VA 23261",
         invoicePercentage: 15,
         reports: [],
         createdAt: "2024-10-13T15:55:06.303Z",
@@ -57,7 +62,10 @@ class ClientRepository extends BaseRepository {
         id: "voyyqpzsvf",
         businessName: "Pacific Coast Pharmacy",
         name: "Pacific Coast Pharmacy",
+        deaNumber: "BP9876543",
+        deaExpirationDate: "2027-03-15",
         stateLicenseNumber: "CA-PHARM-67890",
+        stateLicenseExpirationDate: "2026-09-30",
         streetAddress: "456 Harbor Blvd",
         city: "San Francisco",
         state: "CA",
@@ -65,7 +73,8 @@ class ClientRepository extends BaseRepository {
         phoneNumber: "(555) 987-6543",
         contactName: "Dr. Michael Chen",
         wholesaler: "Cardinal Health",
-        accountNumber: "CAR-SF-67890",
+        wholesalerAccountNumber: "CAR-SF-67890",
+        wholesalerAddress: "7000 Cardinal Pl, Dublin, OH 43017",
         invoicePercentage: 20,
         reports: [],
         createdAt: "2023-10-14T15:55:06.303Z",
@@ -75,7 +84,10 @@ class ClientRepository extends BaseRepository {
         id: "v58sdhudji",
         businessName: "Central Valley Hospital",
         name: "Central Valley Hospital",
+        deaNumber: "CH5551234",
+        deaExpirationDate: "2026-08-20",
         stateLicenseNumber: "CA-HOSP-11111",
+        stateLicenseExpirationDate: "2026-12-31",
         streetAddress: "789 Valley Way",
         city: "Fresno",
         state: "CA",
@@ -83,7 +95,8 @@ class ClientRepository extends BaseRepository {
         phoneNumber: "(555) 555-5555",
         contactName: "Dr. Emily Rodriguez",
         wholesaler: "AmerisourceBergen",
-        accountNumber: "ABC-FR-11111",
+        wholesalerAccountNumber: "ABC-FR-11111",
+        wholesalerAddress: "1 W 1st Ave, Conshohocken, PA 19428",
         invoicePercentage: 25,
         reports: [],
         createdAt: "2025-04-16T15:55:06.303Z",
@@ -106,12 +119,23 @@ class ClientRepository extends BaseRepository {
   create(clientData) {
     const clients = this.readData();
 
+    // Validate DEA number if provided
+    if (clientData.deaNumber) {
+      const deaValidation = validateDEANumberOptional(clientData.deaNumber);
+      if (!deaValidation.isValid) {
+        throw new Error(`Invalid DEA number: ${deaValidation.error}`);
+      }
+    }
+
     const newClient = {
       ...clientData,
       id: clientData.id || this.generateId(),
       name: clientData.businessName,
       reports: clientData.reports || [],
+      deaNumber: clientData.deaNumber || null,
+      deaExpirationDate: clientData.deaExpirationDate || null,
       stateLicenseNumber: clientData.stateLicenseNumber || null,
+      stateLicenseExpirationDate: clientData.stateLicenseExpirationDate || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -124,6 +148,14 @@ class ClientRepository extends BaseRepository {
   update(id, updates) {
     if (updates.businessName) {
       updates.name = updates.businessName;
+    }
+
+    // Validate DEA number if being updated
+    if (updates.deaNumber !== undefined) {
+      const deaValidation = validateDEANumberOptional(updates.deaNumber);
+      if (!deaValidation.isValid) {
+        throw new Error(`Invalid DEA number: ${deaValidation.error}`);
+      }
     }
 
     return super.update(id, updates);

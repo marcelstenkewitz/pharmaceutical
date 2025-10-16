@@ -6,28 +6,31 @@
  */
 
 /**
- * Get intelligent default values for wholesaler, accountNumber, and invoicePercentage
+ * Get intelligent default values for wholesaler, wholesalerAccountNumber, and invoicePercentage
  * Based on business name, location, or universal defaults
  *
  * @param {Object} client - Client object
- * @returns {Object} - { wholesaler, accountNumber, invoicePercentage }
+ * @returns {Object} - { wholesaler, wholesalerAccountNumber, wholesalerAddress, invoicePercentage }
  */
 function getWholesalerDefaults(client) {
   // Known client mappings
   const knownClients = {
     'Sunrise Medical Center': {
       wholesaler: 'McKesson Corporation',
-      accountNumber: 'MCK-LA-12345',
+      wholesalerAccountNumber: 'MCK-LA-12345',
+      wholesalerAddress: '8741 Landmark Rd, Richmond, VA 23261',
       invoicePercentage: 15
     },
     'Pacific Coast Pharmacy': {
       wholesaler: 'Cardinal Health',
-      accountNumber: 'CAR-SF-67890',
+      wholesalerAccountNumber: 'CAR-SF-67890',
+      wholesalerAddress: '7000 Cardinal Pl, Dublin, OH 43017',
       invoicePercentage: 20
     },
     'Central Valley Hospital': {
       wholesaler: 'AmerisourceBergen',
-      accountNumber: 'ABC-FR-11111',
+      wholesalerAccountNumber: 'ABC-FR-11111',
+      wholesalerAddress: '1 W 1st Ave, Conshohocken, PA 19428',
       invoicePercentage: 25
     }
   };
@@ -44,7 +47,8 @@ function getWholesalerDefaults(client) {
 
   return {
     wholesaler: 'McKesson Corporation',
-    accountNumber: `MCK-${state}-${cityCode}${randomId}`,
+    wholesalerAccountNumber: `MCK-${state}-${cityCode}${randomId}`,
+    wholesalerAddress: '',
     invoicePercentage: 15
   };
 }
@@ -52,9 +56,13 @@ function getWholesalerDefaults(client) {
 /**
  * Migrate client data from old structure to new structure
  *
- * Old structure issues:
- * - Had deaNumber and deaExpirationDate fields (now removed)
- * - Missing wholesaler, accountNumber, invoicePercentage fields
+ * Migration handles:
+ * - Rename 'manufacturer' field to 'wholesaler'
+ * - Rename 'accountNumber' field to 'wholesalerAccountNumber'
+ * - Add 'wholesalerAddress' field
+ * - Ensure DEA fields exist (deaNumber, deaExpirationDate)
+ * - Ensure stateLicenseExpirationDate exists
+ * - Missing wholesaler, wholesalerAccountNumber, invoicePercentage fields
  * - Missing or mismatched 'name' field
  *
  * @param {Array} clients - Array of client objects
@@ -73,25 +81,49 @@ function migrateClients(clients) {
     const clientChanges = [];
     const migratedClient = { ...client };
 
-    // Check if this client has DEA fields (old structure)
-    if (migratedClient.deaNumber !== undefined) {
-      delete migratedClient.deaNumber;
-      clientChanges.push('Removed deaNumber field');
+    // Migrate 'manufacturer' field to 'wholesaler'
+    if (migratedClient.manufacturer !== undefined && migratedClient.wholesaler === undefined) {
+      migratedClient.wholesaler = migratedClient.manufacturer;
+      delete migratedClient.manufacturer;
+      clientChanges.push(`Renamed manufacturer to wholesaler: "${migratedClient.wholesaler}"`);
       needsMigration = true;
     }
 
-    if (migratedClient.deaExpirationDate !== undefined) {
-      delete migratedClient.deaExpirationDate;
-      clientChanges.push('Removed deaExpirationDate field');
+    // Migrate 'accountNumber' field to 'wholesalerAccountNumber'
+    if (migratedClient.accountNumber !== undefined && migratedClient.wholesalerAccountNumber === undefined) {
+      migratedClient.wholesalerAccountNumber = migratedClient.accountNumber;
+      delete migratedClient.accountNumber;
+      clientChanges.push(`Renamed accountNumber to wholesalerAccountNumber: "${migratedClient.wholesalerAccountNumber}"`);
+      needsMigration = true;
+    }
+
+    // Ensure DEA fields exist
+    if (migratedClient.deaNumber === undefined) {
+      migratedClient.deaNumber = null;
+      clientChanges.push('Added deaNumber field (null)');
+      needsMigration = true;
+    }
+
+    if (migratedClient.deaExpirationDate === undefined) {
+      migratedClient.deaExpirationDate = null;
+      clientChanges.push('Added deaExpirationDate field (null)');
+      needsMigration = true;
+    }
+
+    // Ensure state license expiration exists
+    if (migratedClient.stateLicenseExpirationDate === undefined) {
+      migratedClient.stateLicenseExpirationDate = null;
+      clientChanges.push('Added stateLicenseExpirationDate field (null)');
       needsMigration = true;
     }
 
     // Ensure wholesaler fields exist with intelligent defaults
     // Handle both undefined AND null values (from previous migrations)
-    // Get defaults once to ensure consistency across all three fields
+    // Get defaults once to ensure consistency across all fields
     const needsWholesalerDefaults =
       migratedClient.wholesaler === undefined || migratedClient.wholesaler === null ||
-      migratedClient.accountNumber === undefined || migratedClient.accountNumber === null ||
+      migratedClient.wholesalerAccountNumber === undefined || migratedClient.wholesalerAccountNumber === null ||
+      migratedClient.wholesalerAddress === undefined ||
       migratedClient.invoicePercentage === undefined || migratedClient.invoicePercentage === null;
 
     if (needsWholesalerDefaults) {
@@ -103,9 +135,19 @@ function migrateClients(clients) {
         needsMigration = true;
       }
 
-      if (migratedClient.accountNumber === undefined || migratedClient.accountNumber === null) {
-        migratedClient.accountNumber = defaults.accountNumber;
-        clientChanges.push(`Set accountNumber to: "${defaults.accountNumber}"`);
+      if (migratedClient.wholesalerAccountNumber === undefined || migratedClient.wholesalerAccountNumber === null) {
+        migratedClient.wholesalerAccountNumber = defaults.wholesalerAccountNumber;
+        clientChanges.push(`Set wholesalerAccountNumber to: "${defaults.wholesalerAccountNumber}"`);
+        needsMigration = true;
+      }
+
+      if (migratedClient.wholesalerAddress === undefined) {
+        migratedClient.wholesalerAddress = defaults.wholesalerAddress || '';
+        if (defaults.wholesalerAddress) {
+          clientChanges.push(`Set wholesalerAddress to: "${defaults.wholesalerAddress}"`);
+        } else {
+          clientChanges.push('Added wholesalerAddress field (empty)');
+        }
         needsMigration = true;
       }
 

@@ -9,7 +9,7 @@ const ClientController = require('./controllers/ClientController');
 const ReportController = require('./controllers/ReportController');
 const ManualEntryController = require('./controllers/ManualEntryController');
 const LabelerController = require('./controllers/LabelerController');
-const WholesalerController = require('./controllers/WholesalerController');
+const ManufacturerController = require('./controllers/ManufacturerController');
 const CompanySettingsController = require('./controllers/CompanySettingsController');
 const PDFController = require('./controllers/PDFController');
 
@@ -147,7 +147,7 @@ try {
     reportController: new ReportController(repositories),
     manualEntryController: new ManualEntryController(repositories),
     labelerController: new LabelerController(repositories),
-    wholesalerController: new WholesalerController(repositories),
+    manufacturerController: new ManufacturerController(repositories),
     companySettingsController: new CompanySettingsController(repositories),
     pdfController: new PDFController(repositories)
   };

@@ -81,15 +81,15 @@ function fillClientInfo(page, client, font, totalLineItems, companySettings = nu
   // Use the new coordinate structure from form222-coordinates.js
   const coords = FORM_222_CONFIG || FORM_222_COORDINATES;
 
-  // DEA Number - Use company's DEA number, not client's
-  const companyDEA = companySettings?.deaNumber || null;
-  if (companyDEA && coords.deaNumber) {
+  // DEA Number - Use client's DEA number
+  const clientDEA = client.deaNumber || null;
+  if (clientDEA && coords.deaNumber) {
     const deaFontSize = coords.deaNumber.size || 8;
     if (coords.deaNumber.characterSpacing) {
       // Draw each character with the specified spacing
-      for (let i = 0; i < companyDEA.length; i++) {
+      for (let i = 0; i < clientDEA.length; i++) {
         const charX = coords.deaNumber.x + (i * coords.deaNumber.characterSpacing);
-        page.drawText(companyDEA[i], {
+        page.drawText(clientDEA[i], {
           x: charX,
           y: coords.deaNumber.y,
           size: deaFontSize,
@@ -99,7 +99,7 @@ function fillClientInfo(page, client, font, totalLineItems, companySettings = nu
       }
     } else {
       // Draw DEA number as a single string if no character spacing specified
-      page.drawText(companyDEA, {
+      page.drawText(clientDEA, {
         x: coords.deaNumber.x,
         y: coords.deaNumber.y,
         size: deaFontSize,
@@ -491,13 +491,143 @@ function renderTextWithFit(page, text, x, y, maxWidth, font, baseFontSize = 5.5,
 }
 
 /**
+ * Calculate optimal column widths based on actual data content
+ * Intelligently distributes available page width to minimize truncation
+ * @param {Array} lineItems - Array of line items to analyze
+ * @param {Object} font - PDF font object for width measurement
+ * @param {number} fontSize - Font size for measurement
+ * @returns {Object} { widths: Array<number>, positions: Array<number> }
+ */
+function calculateDynamicColumnWidths(lineItems, font, fontSize) {
+  const LEFT_MARGIN = 40;
+  const RIGHT_EDGE = 572;
+  const AVAILABLE_WIDTH = RIGHT_EDGE - LEFT_MARGIN; // 532 points
+  const COLUMN_PADDING = 5; // Space between columns
+
+  // Define column configuration with constraints and priority
+  const columnConfig = [
+    { name: 'NDC', minWidth: 50, maxWidth: 75, priority: 1, flexible: false },
+    { name: 'Class', minWidth: 25, maxWidth: 28, priority: 1, flexible: false },
+    { name: 'Qty', minWidth: 22, maxWidth: 35, priority: 1, flexible: false },
+    { name: 'P/F', minWidth: 20, maxWidth: 20, priority: 1, flexible: false },
+    { name: 'Product Name', minWidth: 80, maxWidth: 250, priority: 5, flexible: true },
+    { name: 'Manufacturer', minWidth: 60, maxWidth: 150, priority: 3, flexible: true },
+    { name: 'Strength', minWidth: 30, maxWidth: 70, priority: 2, flexible: true },
+    { name: 'Size', minWidth: 30, maxWidth: 60, priority: 2, flexible: true },
+    { name: 'Form', minWidth: 30, maxWidth: 70, priority: 2, flexible: true }
+  ];
+
+  // Measure actual content widths by scanning all data
+  const measuredWidths = columnConfig.map((col, colIndex) => {
+    let maxContentWidth = col.minWidth;
+
+    // Measure header width first
+    const headerWidth = font.widthOfTextAtSize(col.name, 9) + COLUMN_PADDING;
+    maxContentWidth = Math.max(maxContentWidth, headerWidth);
+
+    // Measure all row data
+    lineItems.forEach(item => {
+      let content = '';
+      switch(colIndex) {
+        case 0: content = item.ndc11 || 'N/A'; break;
+        case 1: content = item.dea_schedule || 'NC'; break;
+        case 2: content = (item.packages || 0).toString(); break;
+        case 3: content = item.finished === true ? 'F' : item.finished === false ? 'P' : '-'; break;
+        case 4: content = item.itemName || item.productName || 'Unknown'; break;
+        case 5: content = item.labeler_name || item.manufacturer || ''; break;
+        case 6: content = item.strength || ''; break;
+        case 7: content = item.packageSize || ''; break;
+        case 8: content = item.dosageForm || item.form || ''; break;
+      }
+
+      if (content) {
+        const contentWidth = font.widthOfTextAtSize(String(content), fontSize) + COLUMN_PADDING;
+        maxContentWidth = Math.max(maxContentWidth, contentWidth);
+      }
+    });
+
+    // Constrain to min/max bounds
+    return Math.min(Math.max(maxContentWidth, col.minWidth), col.maxWidth);
+  });
+
+  // Calculate total measured width
+  let totalMeasuredWidth = measuredWidths.reduce((sum, w) => sum + w, 0);
+
+  // If measured widths fit within available space, distribute extra space proportionally
+  if (totalMeasuredWidth <= AVAILABLE_WIDTH) {
+    const extraSpace = AVAILABLE_WIDTH - totalMeasuredWidth;
+    const flexibleColumns = columnConfig.filter(col => col.flexible);
+    const totalFlexPriority = flexibleColumns.reduce((sum, col) => sum + col.priority, 0);
+
+    const finalWidths = measuredWidths.map((width, index) => {
+      const col = columnConfig[index];
+      if (!col.flexible) return width;
+
+      // Distribute extra space by priority
+      const additionalSpace = (extraSpace * col.priority) / totalFlexPriority;
+      return Math.min(width + additionalSpace, col.maxWidth);
+    });
+
+    // Convert widths to x positions
+    const positions = [LEFT_MARGIN];
+    for (let i = 0; i < finalWidths.length - 1; i++) {
+      positions.push(positions[i] + finalWidths[i]);
+    }
+
+    return { widths: finalWidths, positions };
+  }
+
+  // If measured widths exceed available space, use compression strategy
+  // Start with minimums, then distribute remaining space by priority
+  const minWidths = columnConfig.map(col => col.minWidth);
+  const totalMinWidth = minWidths.reduce((sum, w) => sum + w, 0);
+
+  if (totalMinWidth >= AVAILABLE_WIDTH) {
+    // Even minimums don't fit - scale down proportionally
+    const scaleFactor = AVAILABLE_WIDTH / totalMinWidth;
+    const scaledWidths = minWidths.map(w => w * scaleFactor);
+
+    const positions = [LEFT_MARGIN];
+    for (let i = 0; i < scaledWidths.length - 1; i++) {
+      positions.push(positions[i] + scaledWidths[i]);
+    }
+
+    return { widths: scaledWidths, positions };
+  }
+
+  // Distribute remaining space to flexible columns by priority
+  const remainingSpace = AVAILABLE_WIDTH - totalMinWidth;
+  const flexibleColumns = columnConfig
+    .map((col, index) => ({ col, index, measuredWidth: measuredWidths[index] }))
+    .filter(item => item.col.flexible);
+
+  const totalFlexPriority = flexibleColumns.reduce((sum, item) => sum + item.col.priority, 0);
+
+  const finalWidths = [...minWidths];
+  flexibleColumns.forEach(({ col, index, measuredWidth }) => {
+    const priorityShare = (remainingSpace * col.priority) / totalFlexPriority;
+    const desiredWidth = measuredWidth - col.minWidth; // How much more than minimum we want
+    const allocation = Math.min(priorityShare, desiredWidth, col.maxWidth - col.minWidth);
+    finalWidths[index] = col.minWidth + allocation;
+  });
+
+  // Convert widths to x positions
+  const positions = [LEFT_MARGIN];
+  for (let i = 0; i < finalWidths.length - 1; i++) {
+    positions.push(positions[i] + finalWidths[i]);
+  }
+
+  return { widths: finalWidths, positions };
+}
+
+/**
  * Generate a general inventory report PDF
  * @param {Object} reportData - Report data including client info and line items
  * @param {Object} companySettings - Company settings from database
- * @param {Object} wholesalerInfo - Wholesaler information
+ * @param {Object} manufacturerInfo - Manufacturer information
  * @returns {Promise<Buffer>} - Generated PDF as buffer
  */
-async function generateInventoryPDF(reportData, companySettings = null, wholesalerInfo = null) {
+async function generateInventoryPDF(reportData, companySettings = null, manufacturerInfo = null) {
   try {
     // Create a new PDF document
     const pdfDoc = await PDFDocument.create();
@@ -625,10 +755,10 @@ async function generateInventoryPDF(reportData, companySettings = null, wholesal
         });
       }
 
-      // COLUMN 2 - Wholesaler Information
+      // COLUMN 2 - Wholesaler Information (from client data)
       y = height - 40 - lineHeight - 8; // Reset to row 2
 
-      if (wholesalerInfo && wholesalerInfo.name) {
+      if (reportData.client && reportData.client.wholesaler) {
         page.drawText('Wholesaler:', {
           x: col2X,
           y: y,
@@ -638,7 +768,8 @@ async function generateInventoryPDF(reportData, companySettings = null, wholesal
         });
         y -= lineHeight;
 
-        page.drawText(wholesalerInfo.name, {
+        // Wholesaler Name
+        page.drawText(reportData.client.wholesaler, {
           x: col2X,
           y: y,
           size: 8,
@@ -647,8 +778,9 @@ async function generateInventoryPDF(reportData, companySettings = null, wholesal
         });
         y -= lineHeight - 2;
 
-        if (wholesalerInfo.address) {
-          page.drawText(wholesalerInfo.address, {
+        // Wholesaler Address
+        if (reportData.client.wholesalerAddress) {
+          page.drawText(reportData.client.wholesalerAddress, {
             x: col2X,
             y: y,
             size: 8,
@@ -656,16 +788,17 @@ async function generateInventoryPDF(reportData, companySettings = null, wholesal
             color: rgb(0, 0, 0),
           });
           y -= lineHeight - 2;
+        }
 
-          if (wholesalerInfo.city && wholesalerInfo.state) {
-            page.drawText(`${wholesalerInfo.city}, ${wholesalerInfo.state} ${wholesalerInfo.zipCode || ''}`, {
-              x: col2X,
-              y: y,
-              size: 8,
-              font: font,
-              color: rgb(0, 0, 0),
-            });
-          }
+        // Wholesaler Account Number
+        if (reportData.client.wholesalerAccountNumber) {
+          page.drawText(`Account: ${reportData.client.wholesalerAccountNumber}`, {
+            x: col2X,
+            y: y,
+            size: 8,
+            font: font,
+            color: rgb(0, 0, 0),
+          });
         }
       }
 
@@ -704,6 +837,7 @@ async function generateInventoryPDF(reportData, companySettings = null, wholesal
 
         const customerInfo = [
           `Name: ${reportData.client.businessName || 'N/A'}`,
+          reportData.client.deaNumber ? `DEA: ${reportData.client.deaNumber}` : '',
           `${reportData.client.streetAddress || ''}`,
           `${reportData.client.city || ''}, ${reportData.client.state || ''} ${reportData.client.zipCode || ''}`
         ];
@@ -740,11 +874,16 @@ async function generateInventoryPDF(reportData, companySettings = null, wholesal
       color: rgb(0, 0, 0),
     });
     yPosition -= 18;
-    
-    // Table header row - Column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Wholesaler, Strength, Size, Form
-    const headers = ['NDC', 'Class', 'Qty', 'P/F', 'Product Name', 'Manufacturer', 'Wholesaler', 'Strength', 'Size', 'Form'];
-    // OPTIMIZED column positions - More space for Product Name (160pt), Manufacturer (100pt), Wholesaler (60pt)
-    const xPositions = [40, 95, 118, 140, 160, 320, 420, 480, 520, 550];
+
+    // Table header row - Column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Strength, Size, Form
+    const headers = ['NDC', 'Class', 'Qty', 'P/F', 'Product Name', 'Manufacturer', 'Strength', 'Size', 'Form'];
+
+    // Calculate optimal column widths based on actual data content
+    const { positions: xPositions } = calculateDynamicColumnWidths(
+      reportData.lineItems || [],
+      font,
+      5.5 // fontSize for content measurement
+    );
 
     headers.forEach((header, index) => {
       page.drawText(header, {
@@ -813,10 +952,7 @@ async function generateInventoryPDF(reportData, companySettings = null, wholesal
       const itemTotal = pricePerUnit * unitsPerPackage * quantity;
       totalPrice += itemTotal;
 
-      // Get wholesaler from client
-      const wholesalerName = reportData.client?.wholesaler || '-';
-
-      // Column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Wholesaler, Strength, Size, Form
+      // Column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Strength, Size, Form
       const rowData = [
         item.ndc11 || 'N/A',                                            // NDC - full text
         item.dea_schedule || 'NC',                                      // Class (NC = Non-Controlled)
@@ -824,7 +960,6 @@ async function generateInventoryPDF(reportData, companySettings = null, wholesal
         item.finished === true ? 'F' : item.finished === false ? 'P' : '-', // P/F
         item.itemName || item.productName || 'Unknown',                 // Product Name - full text
         item.labeler_name || item.manufacturer || '',                   // Manufacturer - full text
-        wholesalerName,                                                 // Wholesaler - full text
         item.strength || '',                                            // Strength - full text
         item.packageSize || '',                                         // Size - full text
         item.dosageForm || item.form || ''                              // Form - full text
@@ -903,21 +1038,22 @@ async function generateInventoryPDF(reportData, companySettings = null, wholesal
     });
     yPosition -= 15;
 
-    // Customer Date field
+    // Customer Date field - empty line for manual entry
     currentPage.drawText('Date:', {
       x: 50,
       y: yPosition,
       size: 9,
-      font: font,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
 
     currentPage.drawLine({
-      start: { x: 80, y: yPosition - 2 },
-      end: { x: 200, y: yPosition - 2 },
+      start: { x: 85, y: yPosition },
+      end: { x: 200, y: yPosition },
       thickness: 1,
       color: rgb(0, 0, 0),
     });
+
     yPosition -= 30;
 
     // Company Signature Section
@@ -939,21 +1075,22 @@ async function generateInventoryPDF(reportData, companySettings = null, wholesal
     });
     yPosition -= 15;
 
-    // Company Date field
+    // Company Date field - empty line for manual entry
     currentPage.drawText('Date:', {
       x: 50,
       y: yPosition,
       size: 9,
-      font: font,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
 
     currentPage.drawLine({
-      start: { x: 80, y: yPosition - 2 },
-      end: { x: 200, y: yPosition - 2 },
+      start: { x: 85, y: yPosition },
+      end: { x: 200, y: yPosition },
       thickness: 1,
       color: rgb(0, 0, 0),
     });
+
     yPosition -= 30;
 
     // Footer
@@ -1069,10 +1206,10 @@ async function generateCoordinateFinder() {
  * Generate an invoice PDF grouped by manufacturer
  * @param {Object} reportData - Report data including client info and line items
  * @param {Object} companySettings - Company settings from database
- * @param {Object} wholesalerInfo - Wholesaler information
+ * @param {Object} manufacturerInfo - Manufacturer information
  * @returns {Promise<Buffer>} - Generated PDF as buffer
  */
-async function generateInvoicePDF(reportData, companySettings = null, wholesalerInfo = null) {
+async function generateInvoicePDF(reportData, companySettings = null, manufacturerInfo = null) {
   try {
     // Create a new PDF document
     const pdfDoc = await PDFDocument.create();

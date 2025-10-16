@@ -2,14 +2,14 @@ const express = require('express');
 const router = express.Router();
 
 /**
- * Wholesaler route handler
- * @param {Object} wholesalerController - The wholesaler controller instance
+ * Manufacturer route handler
+ * @param {Object} manufacturerController - The manufacturer controller instance
  * @returns {express.Router} Configured router
  */
-function createWholesalerRoutes(wholesalerController) {
-  // Get all wholesalers
-  router.get('/api/wholesalers', (req, res) => {
-    const result = wholesalerController.getAllWholesalers();
+function createManufacturerRoutes(manufacturerController) {
+  // Get all manufacturers
+  router.get('/api/manufacturers', (req, res) => {
+    const result = manufacturerController.getAllManufacturers();
 
     if (result.success) {
       res.json({ ok: true, ...result.data });
@@ -21,9 +21,9 @@ function createWholesalerRoutes(wholesalerController) {
     }
   });
 
-  // Add or update wholesaler
-  router.post('/api/wholesalers', (req, res) => {
-    const result = wholesalerController.createOrUpdateWholesaler(req.body);
+  // Add or update manufacturer
+  router.post('/api/manufacturers', (req, res) => {
+    const result = manufacturerController.createOrUpdateManufacturer(req.body);
 
     if (result.success) {
       res.status(201).json({ ok: true, ...result.data });
@@ -35,10 +35,10 @@ function createWholesalerRoutes(wholesalerController) {
     }
   });
 
-  // Get a specific wholesaler
-  router.get('/api/wholesalers/:name', (req, res) => {
+  // Get a specific manufacturer
+  router.get('/api/manufacturers/:name', (req, res) => {
     const { name } = req.params;
-    const result = wholesalerController.getWholesalerByName(name);
+    const result = manufacturerController.getManufacturerByName(name);
 
     if (result.success) {
       res.json({ ok: true, ...result.data });
@@ -50,10 +50,10 @@ function createWholesalerRoutes(wholesalerController) {
     }
   });
 
-  // Delete a wholesaler
-  router.delete('/api/wholesalers/:name', (req, res) => {
+  // Delete a manufacturer
+  router.delete('/api/manufacturers/:name', (req, res) => {
     const { name } = req.params;
-    const result = wholesalerController.deleteWholesalerByName(name);
+    const result = manufacturerController.deleteManufacturerByName(name);
 
     if (result.success) {
       res.json({ ok: true, ...result.data });
@@ -68,4 +68,4 @@ function createWholesalerRoutes(wholesalerController) {
   return router;
 }
 
-module.exports = createWholesalerRoutes;
+module.exports = createManufacturerRoutes;

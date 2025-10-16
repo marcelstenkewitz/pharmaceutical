@@ -1,9 +1,11 @@
 {
   "companyName": "Direct Returns",
-  "addressLine1": "123 Pharma Street",
-  "addressLine2": "",
-  "city": "Medical City",
+  "addressLine1": "123 Pharmaceutical Way",
+  "addressLine2": "Suite 200",
+  "city": "San Diego",
   "state": "CA",
-  "zipCode": "90210",
-  "deaNumber": "DR1234567"
+  "zipCode": "92101",
+  "deaNumber": "RD1234567",
+  "createdAt": "2025-10-16T22:38:04.587Z",
+  "updatedAt": "2025-10-16T22:38:04.587Z"
 }

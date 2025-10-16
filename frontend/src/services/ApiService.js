@@ -304,43 +304,43 @@ class ApiService {
     }
   }
 
-  // --- WHOLESALERS METHODS ---
-  async getWholesalers() {
+  // --- MANUFACTURERS METHODS ---
+  async getManufacturers() {
     try {
-      const response = await this.client.get('/wholesalers');
+      const response = await this.client.get('/manufacturers');
       return response.data;
     } catch (error) {
-      throw this.handleError(error, 'Failed to get wholesalers');
+      throw this.handleError(error, 'Failed to get manufacturers');
     }
   }
 
-  async saveWholesaler(wholesalerData) {
+  async saveManufacturer(manufacturerData) {
     try {
-      const response = await this.client.post('/wholesalers', wholesalerData);
+      const response = await this.client.post('/manufacturers', manufacturerData);
       return response.data;
     } catch (error) {
-      throw this.handleError(error, 'Failed to save wholesaler');
+      throw this.handleError(error, 'Failed to save manufacturer');
     }
   }
 
-  async getWholesaler(wholesalerName) {
+  async getManufacturer(manufacturerName) {
     try {
-      const response = await this.client.get(`/wholesalers/${encodeURIComponent(wholesalerName)}`);
+      const response = await this.client.get(`/manufacturers/${encodeURIComponent(manufacturerName)}`);
       return response.data;
     } catch (error) {
       if (error.response?.status === 404) {
         return null;
       }
-      throw this.handleError(error, 'Failed to get wholesaler');
+      throw this.handleError(error, 'Failed to get manufacturer');
     }
   }
 
-  async deleteWholesaler(wholesalerName) {
+  async deleteManufacturer(manufacturerName) {
     try {
-      const response = await this.client.delete(`/wholesalers/${encodeURIComponent(wholesalerName)}`);
+      const response = await this.client.delete(`/manufacturers/${encodeURIComponent(manufacturerName)}`);
       return response.data;
     } catch (error) {
-      throw this.handleError(error, 'Failed to delete wholesaler');
+      throw this.handleError(error, 'Failed to delete manufacturer');
     }
   }
 

@@ -8,12 +8,14 @@ class CompanySettingsRepository extends BaseRepository {
   getDefaultData() {
     return {
       companyName: 'Direct Returns',
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      deaNumber: ''
+      addressLine1: '123 Pharmaceutical Way',
+      addressLine2: 'Suite 200',
+      city: 'San Diego',
+      state: 'CA',
+      zipCode: '92101',
+      deaNumber: 'RD1234567',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
   }
 

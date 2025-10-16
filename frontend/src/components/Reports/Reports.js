@@ -366,7 +366,6 @@ const Reports = () => {
                               <th>Pricing</th>
                               <th>Total Price</th>
                               <th>DEA</th>
-                              <th className="hide-mobile fw-bold">Wholesaler</th>
                               <th className="hide-mobile fw-bold">Manufacturer</th>
                               <th className="hide-mobile fw-bold">Notes for Return</th>
                             </tr>
@@ -432,7 +431,6 @@ const Reports = () => {
                                     <span className="text-muted">-</span>
                                   )}
                                 </td>
-                                <td className="hide-mobile">{clientInfo?.wholesaler || 'N/A'}</td>
                                 <td className="hide-mobile">{item.labeler_name || 'N/A'}</td>
                                 <td className="hide-mobile return-instructions-column">
                                   <div className="text-truncate" title={getReturnInstructions(item.labeler_name)}>
@@ -485,8 +483,8 @@ const Reports = () => {
                             {item.dea_schedule && (
                               <div className="mobile-item-detail">
                                 <span className="mobile-item-label">DEA Schedule:</span>
-                                <Badge 
-                                  bg={item.dea_schedule === 'CII' ? 'danger' : 
+                                <Badge
+                                  bg={item.dea_schedule === 'CII' ? 'danger' :
                                       item.dea_schedule === 'CIII' ? 'warning' :
                                       item.dea_schedule === 'CIV' || item.dea_schedule === 'CV' ? 'info' : 'secondary'}
                                 >
@@ -494,10 +492,6 @@ const Reports = () => {
                                 </Badge>
                               </div>
                             )}
-                            <div className="mobile-item-detail">
-                              <span className="mobile-item-label">Wholesaler:</span>
-                              <span>{clientInfo?.wholesaler || 'N/A'}</span>
-                            </div>
                             <div className="mobile-item-detail">
                               <span className="mobile-item-label">Manufacturer:</span>
                               <span>{item.labeler_name || 'N/A'}</span>

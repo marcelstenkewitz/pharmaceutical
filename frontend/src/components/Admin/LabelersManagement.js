@@ -6,19 +6,19 @@ import './labelers-management.css';
 const LabelersManagement = () => {
   // DataTable configuration
   const tableConfig = {
-    title: "Wholesalers & Return Instructions Management",
-    entityName: "wholesaler",
+    title: "Manufacturers & Return Instructions Management",
+    entityName: "manufacturer",
     columns: [
       {
         key: 'labeler_name',
-        label: 'Wholesaler Name',
+        label: 'Manufacturer Name',
         render: (labeler) => <strong>{labeler.labeler_name}</strong>
       },
       {
         key: 'address',
         label: 'Address',
         render: (labeler) => (
-          <div className="wholesaler-address">
+          <div className="manufacturer-address">
             {labeler.address && (
               <>
                 {labeler.address}<br />
@@ -43,12 +43,12 @@ const LabelersManagement = () => {
     formFields: [
       {
         name: 'labeler_name',
-        label: 'Wholesaler Name',
+        label: 'Manufacturer Name',
         type: 'text',
         required: true,
         placeholder: 'e.g., McKesson, Cardinal Health, AmerisourceBergen',
         disableOnEdit: true,
-        helpText: 'Wholesaler name cannot be changed for existing entries'
+        helpText: 'Manufacturer name cannot be changed for existing entries'
       },
       {
         name: 'address',
@@ -84,7 +84,7 @@ const LabelersManagement = () => {
         type: 'textarea',
         rows: 4,
         required: true,
-        placeholder: 'Detailed instructions for returning products to this wholesaler...',
+        placeholder: 'Detailed instructions for returning products to this manufacturer...',
         helpText: 'Include phone numbers, addresses, special procedures, or portal information'
       }
     ],
@@ -106,8 +106,8 @@ const LabelersManagement = () => {
       deleteConfirmation: 'alert'
     },
     searchFields: ['labeler_name', 'return_instructions', 'address', 'city'],
-    emptyMessage: "No wholesalers found. Click 'Add Wholesaler' to create your first entry.",
-    addButtonText: "Add Wholesaler",
+    emptyMessage: "No manufacturers found. Click 'Add Manufacturer' to create your first entry.",
+    addButtonText: "Add Manufacturer",
     dataKey: "labelers",
     itemIdField: "labeler_name"
   };

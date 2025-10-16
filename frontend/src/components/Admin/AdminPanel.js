@@ -21,7 +21,7 @@ const AdminPanel = () => {
               Admin Panel - Edit Selection
             </h3>
             <p className="mb-0 mt-2 opacity-75">
-              Manage clients, wholesalers, manual entries, and company settings
+              Manage clients, manufacturers, manual entries, and company settings
             </p>
           </Card.Header>
           <Card.Body className="p-0">
@@ -45,11 +45,11 @@ const AdminPanel = () => {
                 </div>
               </Tab>
               <Tab
-                eventKey="wholesalers"
+                eventKey="manufacturers"
                 title={
                   <span>
                     <TagFill className="me-2" />
-                    Wholesalers
+                    Manufacturers
                   </span>
                 }
               >

@@ -1,14 +1,25 @@
 /**
  * Get client form field configuration
- * @param {Array} wholesalers - Array of wholesaler objects with name property
  * @returns {Array} Form field configuration for client forms
  */
-export const getClientFormFields = (wholesalers = []) => [
+export const getClientFormFields = () => [
   {
     name: 'businessName',
     label: 'Business Name',
     type: 'text',
     required: true
+  },
+  {
+    name: 'deaNumber',
+    label: 'DEA Number',
+    type: 'text',
+    required: false
+  },
+  {
+    name: 'deaExpirationDate',
+    label: 'DEA Expiration Date',
+    type: 'date',
+    required: false
   },
   {
     name: 'stateLicenseNumber',
@@ -17,18 +28,30 @@ export const getClientFormFields = (wholesalers = []) => [
     required: false
   },
   {
-    name: 'wholesaler',
-    label: 'Wholesaler',
-    type: 'select',
-    required: false,
-    placeholder: 'Select a wholesaler',
-    options: wholesalers.map(w => ({ value: w.name, label: w.name }))
+    name: 'stateLicenseExpirationDate',
+    label: 'State License Expiration Date',
+    type: 'date',
+    required: false
   },
   {
-    name: 'accountNumber',
-    label: 'Account Number',
+    name: 'wholesaler',
+    label: 'Wholesaler',
+    type: 'text',
+    required: false,
+    placeholder: 'e.g., McKesson, Cardinal Health, AmerisourceBergen'
+  },
+  {
+    name: 'wholesalerAccountNumber',
+    label: 'Wholesaler Account Number',
     type: 'text',
     required: false
+  },
+  {
+    name: 'wholesalerAddress',
+    label: 'Wholesaler Address',
+    type: 'text',
+    required: false,
+    placeholder: 'Wholesaler street address, city, state, ZIP'
   },
   {
     name: 'streetAddress',

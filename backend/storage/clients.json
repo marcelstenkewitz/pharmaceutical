@@ -9,12 +9,17 @@
     "zipCode": "90210",
     "phoneNumber": "(555) 123-4567",
     "contactName": "Dr. Sarah Johnson",
-    "wholesaler": "McKesson Corporation",
-    "accountNumber": "MCK-LA-12345",
     "invoicePercentage": 15,
     "reports": [],
     "createdAt": "2024-10-13T15:55:06.303Z",
-    "updatedAt": "2025-10-16T17:00:00.000Z"
+    "updatedAt": "2025-10-16T17:00:00.000Z",
+    "deaNumber": null,
+    "deaExpirationDate": null,
+    "stateLicenseExpirationDate": null,
+    "name": "Sunrise Medical Center",
+    "wholesaler": "McKesson Corporation",
+    "wholesalerAccountNumber": "MCK-LA-12345",
+    "wholesalerAddress": "8741 Landmark Rd, Richmond, VA 23261"
   },
   {
     "id": "voyyqpzsvf",
@@ -26,12 +31,17 @@
     "zipCode": "94102",
     "phoneNumber": "(555) 987-6543",
     "contactName": "Dr. Michael Chen",
-    "wholesaler": "Cardinal Health",
-    "accountNumber": "CAR-SF-67890",
     "invoicePercentage": 20,
     "reports": [],
     "createdAt": "2023-10-14T15:55:06.303Z",
-    "updatedAt": "2025-10-16T17:00:00.000Z"
+    "updatedAt": "2025-10-16T17:00:00.000Z",
+    "deaNumber": null,
+    "deaExpirationDate": null,
+    "stateLicenseExpirationDate": null,
+    "name": "Pacific Coast Pharmacy",
+    "wholesaler": "Cardinal Health",
+    "wholesalerAccountNumber": "CAR-SF-67890",
+    "wholesalerAddress": "7000 Cardinal Pl, Dublin, OH 43017"
   },
   {
     "id": "v58sdhudji",
@@ -43,11 +53,16 @@
     "zipCode": "93720",
     "phoneNumber": "(555) 555-5555",
     "contactName": "Dr. Emily Rodriguez",
-    "wholesaler": "AmerisourceBergen",
-    "accountNumber": "ABC-FR-11111",
     "invoicePercentage": 25,
     "reports": [],
     "createdAt": "2025-04-16T15:55:06.303Z",
-    "updatedAt": "2025-10-16T17:00:00.000Z"
+    "updatedAt": "2025-10-16T17:00:00.000Z",
+    "deaNumber": null,
+    "deaExpirationDate": null,
+    "stateLicenseExpirationDate": null,
+    "name": "Central Valley Hospital",
+    "wholesaler": "AmerisourceBergen",
+    "wholesalerAccountNumber": "ABC-FR-11111",
+    "wholesalerAddress": "1 W 1st Ave, Conshohocken, PA 19428"
   }
 ]
