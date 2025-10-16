@@ -1,9 +1,36 @@
 const BaseRepository = require('./base/BaseRepository');
+const { migrateClients, logMigrationResult } = require('../utils/migrations');
 
 class ClientRepository extends BaseRepository {
   constructor(dataDir, reportRepository) {
     super('clients.json', dataDir);
     this.reportRepository = reportRepository;
+    this.migrationRun = false;
+  }
+
+  /**
+   * Override readData to automatically migrate old data structures
+   */
+  readData() {
+    // Get data from parent class
+    const data = super.readData();
+
+    // Only run migration once per server startup
+    if (!this.migrationRun && Array.isArray(data) && data.length > 0) {
+      this.migrationRun = true;
+
+      // Run migration
+      const result = migrateClients(data);
+
+      // If migration was needed, log it and save the migrated data
+      if (result.migrated) {
+        logMigrationResult('clients', result);
+        this.writeData(result.clients);
+        return result.clients;
+      }
+    }
+
+    return data;
   }
 
   getDefaultData() {

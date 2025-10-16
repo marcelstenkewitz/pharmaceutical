@@ -278,10 +278,6 @@ class RepositoryService {
           issues.push(`Client missing ID: ${client.businessName}`);
         }
 
-        if (!client.deaNumber) {
-          issues.push(`Client missing DEA number: ${client.id}`);
-        }
-
         if (client.reports) {
           client.reports.forEach(report => {
             if (!report.id) {
@@ -298,12 +294,6 @@ class RepositoryService {
           });
         }
       });
-
-      const deaNumbers = clients.map(c => c.deaNumber).filter(Boolean);
-      const uniqueDEANumbers = new Set(deaNumbers);
-      if (deaNumbers.length !== uniqueDEANumbers.size) {
-        issues.push('Duplicate DEA numbers found across clients');
-      }
 
       const manualEntries = this.manualEntries.findAll();
       Object.values(manualEntries).forEach(entry => {
