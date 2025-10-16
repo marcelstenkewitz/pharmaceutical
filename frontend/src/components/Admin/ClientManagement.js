@@ -53,6 +53,16 @@ const ClientManagement = () => {
         render: (client) => client.stateLicenseNumber || '-'
       },
       {
+        key: 'wholesaler',
+        label: 'Wholesaler',
+        render: (client) => client.wholesaler || '-'
+      },
+      {
+        key: 'accountNumber',
+        label: 'Account Number',
+        render: (client) => client.accountNumber || '-'
+      },
+      {
         key: 'address',
         label: 'Address',
         render: (client) => (

@@ -25,6 +25,7 @@ const FormModal = ({
           initData[field.name] = field.defaultValue || '';
         }
       });
+      console.log('[FormModal] Initializing with data:', { initialData, initData, formFieldsCount: formFields.length });
       setFormData(initData);
       setValidationErrors({});
     }
