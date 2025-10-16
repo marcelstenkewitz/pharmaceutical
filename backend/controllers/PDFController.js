@@ -2,6 +2,7 @@ const BaseController = require('./BaseController');
 const {
   generateForm222PDF,
   generateInventoryPDF,
+  generateInvoicePDF,
   generateCoordinateFinder,
   updateForm222Coordinates,
   getForm222Coordinates
@@ -14,20 +15,25 @@ class PDFController extends BaseController {
   }
 
   /**
-   * Get wholesaler info from labelers repository
-   * @param {string} labelerName - The labeler/wholesaler name
+   * Get wholesaler info from wholesalers repository
+   * @param {string} wholesalerName - The wholesaler name
    * @returns {Object|null} Wholesaler info or null
    */
-  async getWholesalerInfo(labelerName) {
+  async getWholesalerInfo(wholesalerName) {
     try {
-      const labeler = this.repos.labelers.findByName(labelerName);
-      if (labeler) {
+      if (!wholesalerName) return null;
+
+      // Try to find wholesaler by name
+      const wholesalers = this.repos.wholesalers.findAll();
+      const wholesaler = wholesalers.find(w => w.name === wholesalerName);
+
+      if (wholesaler) {
         return {
-          name: labeler.labeler_name,
-          address: labeler.address || null,
-          city: labeler.city || null,
-          state: labeler.state || null,
-          zipCode: labeler.zipCode || null
+          name: wholesaler.name,
+          address: wholesaler.address || null,
+          city: wholesaler.city || null,
+          state: wholesaler.state || null,
+          zipCode: wholesaler.zipCode || null
         };
       }
       return null;
@@ -99,9 +105,13 @@ class PDFController extends BaseController {
       const { client, report, error } = this.findClientAndReport(clientId, reportId);
       if (error) return error;
 
+      // Get company settings
+      const companySettings = this.repos.companySettings.getSettings();
+
       const reportData = {
         client,
-        lineItems: getCIIItemsForForm222(report.lineItems)
+        lineItems: getCIIItemsForForm222(report.lineItems),
+        companySettings
       };
 
       const pdfBuffer = await generateForm222PDF(reportData, templatePath);
@@ -174,12 +184,15 @@ class PDFController extends BaseController {
         }))
       };
 
-      // Get wholesaler info from the first line item (if available)
-      const wholesalerInfo = report.lineItems && report.lineItems.length > 0 && report.lineItems[0].labeler_name
-        ? await this.getWholesalerInfo(report.lineItems[0].labeler_name)
+      // Get company settings
+      const companySettings = this.repos.companySettings.getSettings();
+
+      // Get wholesaler info from the client's wholesaler field
+      const wholesalerInfo = client.wholesaler
+        ? await this.getWholesalerInfo(client.wholesaler)
         : null;
 
-      const pdfBuffer = await generateInventoryPDF(reportData, null, wholesalerInfo);
+      const pdfBuffer = await generateInventoryPDF(reportData, companySettings, wholesalerInfo);
       const filename = `inventory_${client.businessName}_${new Date().toISOString().split('T')[0]}.pdf`;
 
       return this.handleSuccess({
@@ -190,6 +203,84 @@ class PDFController extends BaseController {
       }, 'generate Inventory PDF');
     } catch (error) {
       return this.handleError(error, 'generate Inventory PDF');
+    }
+  }
+
+  /**
+   * Generate Invoice PDF
+   * @param {string} clientId - The client ID
+   * @param {string} reportId - The report ID
+   * @param {string} [templatePath] - Optional template path
+   * @returns {Object} Response with PDF buffer or error
+   */
+  async generateInvoice(clientId, reportId, templatePath = null) {
+    try {
+      if (!clientId || !reportId) {
+        return {
+          success: false,
+          error: 'Client ID and Report ID are required',
+          statusCode: 400
+        };
+      }
+
+      const { client, report, error } = this.findClientAndReport(clientId, reportId);
+      if (error) return error;
+
+      const reportData = {
+        client,
+        lineItems: (report.lineItems || []).map(item => ({
+          // Basic identification
+          itemName: item.itemName || item.name || item.productName,
+          ndc11: item.ndc11 || item.ndc,
+          productName: item.productName || item.itemName || item.name,
+
+          // Package and quantity
+          packageSize: item.packageSize,
+          packages: item.packages,
+          unitsPerPackage: item.unitsPerPackage || 1,
+
+          // Pricing
+          pricePerUnit: item.pricePerUnit || 0,
+          pricePerPackage: item.pricePerPackage || 0,
+          totalPrice: item.totalPrice || 0,
+
+          // Manufacturer and class
+          labeler_name: item.labeler_name || item.manufacturer || '',
+          manufacturer: item.manufacturer || item.labeler_name || '',
+          dea_schedule: item.dea_schedule || null,
+
+          // Product details from FDA
+          strength: item.strength || '',
+          dosageForm: item.dosageForm || item.form || '',
+          form: item.form || item.dosageForm || '',
+          finished: item.finished !== undefined ? item.finished : null,
+
+          // Additional description
+          brandName: item.brandName || '',
+          genericName: item.genericName || '',
+          route: item.route || []
+        }))
+      };
+
+      // Get company settings
+      const companySettings = this.repos.companySettings.getSettings();
+
+      // Get wholesaler info from the client's wholesaler field
+      const wholesalerInfo = client.wholesaler
+        ? await this.getWholesalerInfo(client.wholesaler)
+        : null;
+
+      const pdfBuffer = await generateInvoicePDF(reportData, companySettings, wholesalerInfo);
+      const filename = `invoice_${client.businessName}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+      return this.handleSuccess({
+        pdfBuffer,
+        filename,
+        contentType: 'application/pdf',
+        disposition: `attachment; filename="${filename}"`
+      }, 'generate Invoice PDF');
+    } catch (error) {
+      return this.handleError(error, 'generate Invoice PDF');
     }
   }
 

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Container, Tab, Tabs, Card } from 'react-bootstrap';
-import { PeopleFill, TagFill, PencilSquare } from 'react-bootstrap-icons';
+import { PeopleFill, TagFill, PencilSquare, Building } from 'react-bootstrap-icons';
 import Wrapper from '../Layout/Wrapper';
 import ClientManagement from './ClientManagement';
 import LabelersManagement from './LabelersManagement';
 import ManualEntries from './ManualEntries';
+import CompanySettings from './CompanySettings';
 import './admin-panel.css';
 
 const AdminPanel = () => {
@@ -20,7 +21,7 @@ const AdminPanel = () => {
               Admin Panel - Edit Selection
             </h3>
             <p className="mb-0 mt-2 opacity-75">
-              Manage clients, wholesalers, and manual entries
+              Manage clients, wholesalers, manual entries, and company settings
             </p>
           </Card.Header>
           <Card.Body className="p-0">
@@ -67,6 +68,19 @@ const AdminPanel = () => {
               >
                 <div className="tab-content-wrapper">
                   <ManualEntries />
+                </div>
+              </Tab>
+              <Tab
+                eventKey="company-settings"
+                title={
+                  <span>
+                    <Building className="me-2" />
+                    Company Settings
+                  </span>
+                }
+              >
+                <div className="tab-content-wrapper">
+                  <CompanySettings />
                 </div>
               </Tab>
             </Tabs>

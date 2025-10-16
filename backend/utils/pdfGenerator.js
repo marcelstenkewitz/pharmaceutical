@@ -9,11 +9,11 @@ const {
 } = require('./form222-coordinates');
 
 // Check if we're in development mode
-// ALWAYS show Form 222 JPG in background for coordinate mapping
+// ALWAYS show Form 222 background for coordinate mapping
 const isDevelopment = true; // process.env.NODE_ENV === 'development' || process.env.FORM_222_DEV_MODE === 'true';
 
-// Path to the JPG template (only used in development)
-const DEA_FORM_JPG_PATH = path.join(__dirname, '..', '..', 'dea1.jpg');
+// Path to the coordinate finder PDF (used as background in development)
+const COORDINATE_FINDER_PDF_PATH = path.join(__dirname, '..', 'coordinate-finder-landscape.pdf');
 
 // Use the imported coordinates
 const FORM_222_COORDINATES = FORM_222_CONFIG;
@@ -73,21 +73,23 @@ function addCoordinateGrid(page, font) {
  * @param {Object} client - Client data
  * @param {Object} font - PDF font object
  * @param {number} totalLineItems - Total number of line items
+ * @param {Object} companySettings - Company settings (for DEA number)
  */
-function fillClientInfo(page, client, font, totalLineItems) {
+function fillClientInfo(page, client, font, totalLineItems, companySettings = null) {
   if (!client) return;
-  
+
   // Use the new coordinate structure from form222-coordinates.js
   const coords = FORM_222_CONFIG || FORM_222_COORDINATES;
-  
-  // DEA Number - Draw each character with spacing if characterSpacing is defined
-  if (client.deaNumber && coords.deaNumber) {
+
+  // DEA Number - Use company's DEA number, not client's
+  const companyDEA = companySettings?.deaNumber || null;
+  if (companyDEA && coords.deaNumber) {
     const deaFontSize = coords.deaNumber.size || 8;
     if (coords.deaNumber.characterSpacing) {
       // Draw each character with the specified spacing
-      for (let i = 0; i < client.deaNumber.length; i++) {
+      for (let i = 0; i < companyDEA.length; i++) {
         const charX = coords.deaNumber.x + (i * coords.deaNumber.characterSpacing);
-        page.drawText(client.deaNumber[i], {
+        page.drawText(companyDEA[i], {
           x: charX,
           y: coords.deaNumber.y,
           size: deaFontSize,
@@ -97,7 +99,7 @@ function fillClientInfo(page, client, font, totalLineItems) {
       }
     } else {
       // Draw DEA number as a single string if no character spacing specified
-      page.drawText(client.deaNumber, {
+      page.drawText(companyDEA, {
         x: coords.deaNumber.x,
         y: coords.deaNumber.y,
         size: deaFontSize,
@@ -251,12 +253,10 @@ function fillLineItems(page, lineItems, font, startIndex = 0) {
       });
     }
     
-    // Item Name (truncate if too long)
+    // Item Name (full text, no truncation)
     if (lineItemCoords.columns.itemName) {
       const itemName = item.itemName || '';
-      const maxWidth = lineItemCoords.columns.itemName.maxWidth || 25;
-      const truncatedName = itemName.length > maxWidth ? itemName.substring(0, maxWidth) + '...' : itemName;
-      page.drawText(truncatedName, {
+      page.drawText(itemName, {
         x: lineItemCoords.columns.itemName.x,
         y: yPosition,
         size: lineItemCoords.columns.itemName.size || 9,
@@ -321,16 +321,28 @@ async function generateForm222PDF(reportData, templatePath = null) {
     // Use Courier (monospace) for better alignment on pre-printed forms
     const font = await pdfDoc.embedFont(StandardFonts.Courier);
     const boldFont = await pdfDoc.embedFont(StandardFonts.CourierBold);
-    
-    // Load JPG in development mode
-    let jpgImage = null;
-    if (isDevelopment && fs.existsSync(DEA_FORM_JPG_PATH)) {
+
+    // Load coordinate finder PDF in development mode
+    let coordinateFinderPage = null;
+    if (isDevelopment && fs.existsSync(COORDINATE_FINDER_PDF_PATH)) {
       try {
-        const jpgBytes = fs.readFileSync(DEA_FORM_JPG_PATH);
-        jpgImage = await pdfDoc.embedJpg(jpgBytes);
-        console.log('Development mode: Loaded DEA Form JPG for coordinate reference');
+        const pdfBytes = fs.readFileSync(COORDINATE_FINDER_PDF_PATH);
+        const coordinateFinderDoc = await PDFDocument.load(pdfBytes);
+        const [firstPage] = coordinateFinderDoc.getPages();
+        coordinateFinderPage = firstPage;
+        console.log('Development mode: Loaded coordinate finder PDF for alignment reference');
       } catch (error) {
-        console.warn('Could not load DEA Form JPG:', error.message);
+        console.warn('Could not load coordinate finder PDF:', error.message);
+        // Fallback to JPG if coordinate finder PDF fails
+        if (fs.existsSync(DEA_FORM_JPG_PATH)) {
+          try {
+            const jpgBytes = fs.readFileSync(DEA_FORM_JPG_PATH);
+            coordinateFinderPage = await pdfDoc.embedJpg(jpgBytes);
+            console.log('Development mode: Loaded DEA Form JPG as fallback');
+          } catch (jpgError) {
+            console.warn('Could not load DEA Form JPG:', jpgError.message);
+          }
+        }
       }
     }
     
@@ -338,25 +350,38 @@ async function generateForm222PDF(reportData, templatePath = null) {
     for (let pageIndex = 0; pageIndex < pagesNeeded; pageIndex++) {
       // Form 222 is landscape orientation (11" x 8.5")
       const currentPage = pdfDoc.addPage([792, 612]); // Landscape
-      
-      // In development mode, add the JPG as background
-      if (isDevelopment && jpgImage) {
-        currentPage.drawImage(jpgImage, {
-          x: 0,
-          y: 0,
-          width: 792,
-          height: 612,
-          opacity: FORM_222_CONFIG?.development?.jpgOpacity || 0.3,
-        });
-        
-        // Add coordinate grid in development mode
-        if (FORM_222_CONFIG?.development?.showCoordinates) {
-          addCoordinateGrid(currentPage, font);
+
+      // In development mode, embed the coordinate finder PDF page as background
+      if (isDevelopment && coordinateFinderPage) {
+        try {
+          // If it's a PDF page, we need to embed it differently
+          if (coordinateFinderPage.getSize) {
+            // It's a page from another PDF - we need to copy it
+            const [embeddedPage] = await pdfDoc.embedPdf(await PDFDocument.load(fs.readFileSync(COORDINATE_FINDER_PDF_PATH)), [0]);
+            currentPage.drawPage(embeddedPage, {
+              x: 0,
+              y: 0,
+              width: 792,
+              height: 612,
+              opacity: FORM_222_CONFIG?.development?.jpgOpacity || 0.3,
+            });
+          } else {
+            // It's a JPG image (fallback)
+            currentPage.drawImage(coordinateFinderPage, {
+              x: 0,
+              y: 0,
+              width: 792,
+              height: 612,
+              opacity: FORM_222_CONFIG?.development?.jpgOpacity || 0.3,
+            });
+          }
+        } catch (error) {
+          console.warn('Error drawing coordinate finder background:', error.message);
         }
       }
       
       // Fill client information on each page
-      fillClientInfo(currentPage, reportData.client, font, totalLineItems);
+      fillClientInfo(currentPage, reportData.client, font, totalLineItems, reportData.companySettings);
       
       // Calculate line items for this page
       const startIndex = pageIndex * maxItemsPerPage;
@@ -406,33 +431,101 @@ function getForm222Coordinates() {
 }
 
 /**
+ * Render text with dynamic font scaling to fit within a maximum width
+ * @param {Object} page - PDF page object
+ * @param {string} text - Text to render
+ * @param {number} x - X coordinate
+ * @param {number} y - Y coordinate
+ * @param {number} maxWidth - Maximum width available for text
+ * @param {Object} font - PDF font object
+ * @param {number} baseFontSize - Desired font size (will scale down if needed)
+ * @param {number} minFontSize - Minimum font size before truncation
+ * @param {Object} color - RGB color object
+ * @returns {number} Actual font size used
+ */
+function renderTextWithFit(page, text, x, y, maxWidth, font, baseFontSize = 5.5, minFontSize = 5.5, color = rgb(0, 0, 0)) {
+  if (!text || text === '' || maxWidth <= 0) return baseFontSize;
+
+  let textString = String(text);
+  const ellipsis = '...';
+  const fontSize = baseFontSize; // Use fixed font size for consistency
+
+  // Add 10% safety margin to account for font measurement imprecision
+  const safeMaxWidth = maxWidth * 0.90;
+
+  let textWidth = font.widthOfTextAtSize(textString, fontSize);
+
+  // Check if text fits without truncation
+  if (textWidth <= safeMaxWidth) {
+    // Text fits - render as is
+    page.drawText(textString, { x, y, size: fontSize, font, color });
+    return fontSize;
+  }
+
+  // Text needs truncation - use ellipsis
+  const ellipsisWidth = font.widthOfTextAtSize(ellipsis, fontSize);
+  const availableWidth = safeMaxWidth - ellipsisWidth;
+
+  // Binary search for optimal truncation point
+  let left = 0;
+  let right = textString.length;
+  let bestLength = 0;
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const testText = textString.substring(0, mid);
+    const testWidth = font.widthOfTextAtSize(testText, fontSize);
+
+    if (testWidth <= availableWidth) {
+      bestLength = mid;
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+
+  const truncated = textString.substring(0, Math.max(1, bestLength));
+  page.drawText(truncated + ellipsis, { x, y, size: fontSize, font, color });
+
+  return fontSize;
+}
+
+/**
  * Generate a general inventory report PDF
  * @param {Object} reportData - Report data including client info and line items
- * @param {Object} companyInfo - Company information (Direct Returns)
+ * @param {Object} companySettings - Company settings from database
  * @param {Object} wholesalerInfo - Wholesaler information
  * @returns {Promise<Buffer>} - Generated PDF as buffer
  */
-async function generateInventoryPDF(reportData, companyInfo = null, wholesalerInfo = null) {
+async function generateInventoryPDF(reportData, companySettings = null, wholesalerInfo = null) {
   try {
     // Create a new PDF document
     const pdfDoc = await PDFDocument.create();
 
-    // Default company info if not provided
-    const company = companyInfo || {
+    // Use company settings from database, with fallback defaults
+    const company = companySettings ? {
+      name: companySettings.companyName || 'Direct Returns',
+      address: companySettings.addressLine1 || '',
+      addressLine2: companySettings.addressLine2 || '',
+      city: companySettings.city || '',
+      state: companySettings.state || '',
+      zipCode: companySettings.zipCode || '',
+      deaNumber: companySettings.deaNumber || ''
+    } : {
       name: 'Direct Returns',
       address: '123 Pharma Street',
+      addressLine2: '',
       city: 'Medical City',
       state: 'CA',
       zipCode: '90210',
-      phone: '(555) 123-4567',
       deaNumber: 'DR1234567'
     };
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Calculate total pages
-    const itemsPerPage = 25; // Estimated
+    // Calculate total pages (adjusted for increased line height)
+    const itemsPerPage = 22; // Estimated - reduced due to increased line height
     const totalPages = Math.ceil((reportData.lineItems?.length || 0) / itemsPerPage) || 1;
     let currentPageNum = 1;
 
@@ -442,15 +535,30 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
 
     // Draw header (3-column grid)
     const drawHeader = (page, pageNum) => {
-      let y = height - 40;
+      let y = height - 30;
       const col1X = 40;
       const col2X = 220;
       const col3X = 420;
       const lineHeight = 12;
 
+      // Report Title at the very top - CENTERED
+      const reportTitle = 'Service Event Inventory Report';
+      const titleFontSize = 16;
+      const titleWidth = font.widthOfTextAtSize(reportTitle, titleFontSize);
+      const centerX = (width - titleWidth) / 2;
+
+      page.drawText(reportTitle, {
+        x: centerX,
+        y: y,
+        size: titleFontSize,
+        font: boldFont,
+        color: rgb(0.2, 0.4, 0.8),
+      });
+      y -= 25; // Move down after title
+
       // COLUMN 1 - Company Logo and Info
       // Row 1: Company Logo/Name
-      page.drawText('DIRECT RETURNS', {
+      page.drawText(company.name.toUpperCase(), {
         x: col1X,
         y: y,
         size: 14,
@@ -460,7 +568,7 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
       y -= lineHeight + 8;
 
       // Row 2: Company Information
-      page.drawText('Direct Returns', {
+      page.drawText(company.name, {
         x: col1X,
         y: y,
         size: 9,
@@ -469,40 +577,53 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
       });
       y -= lineHeight;
 
-      page.drawText(`${company.address}`, {
-        x: col1X,
-        y: y,
-        size: 8,
-        font: font,
-        color: rgb(0, 0, 0),
-      });
-      y -= lineHeight - 2;
+      // Address Line 1
+      if (company.address) {
+        page.drawText(`${company.address}`, {
+          x: col1X,
+          y: y,
+          size: 8,
+          font: font,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight - 2;
+      }
 
-      page.drawText(`${company.city}, ${company.state} ${company.zipCode}`, {
-        x: col1X,
-        y: y,
-        size: 8,
-        font: font,
-        color: rgb(0, 0, 0),
-      });
-      y -= lineHeight - 2;
+      // Address Line 2 (optional)
+      if (company.addressLine2) {
+        page.drawText(`${company.addressLine2}`, {
+          x: col1X,
+          y: y,
+          size: 8,
+          font: font,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight - 2;
+      }
 
-      page.drawText(`Phone: ${company.phone}`, {
-        x: col1X,
-        y: y,
-        size: 8,
-        font: font,
-        color: rgb(0, 0, 0),
-      });
-      y -= lineHeight - 2;
+      // City, State, ZIP
+      if (company.city || company.state || company.zipCode) {
+        const cityStateZip = `${company.city}${company.city && (company.state || company.zipCode) ? ', ' : ''}${company.state} ${company.zipCode}`.trim();
+        page.drawText(cityStateZip, {
+          x: col1X,
+          y: y,
+          size: 8,
+          font: font,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight - 2;
+      }
 
-      page.drawText(`DEA: ${company.deaNumber}`, {
-        x: col1X,
-        y: y,
-        size: 8,
-        font: font,
-        color: rgb(0, 0, 0),
-      });
+      // DEA Number
+      if (company.deaNumber) {
+        page.drawText(`DEA: ${company.deaNumber}`, {
+          x: col1X,
+          y: y,
+          size: 8,
+          font: font,
+          color: rgb(0, 0, 0),
+        });
+      }
 
       // COLUMN 2 - Wholesaler Information
       y = height - 40 - lineHeight - 8; // Reset to row 2
@@ -583,20 +704,15 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
 
         const customerInfo = [
           `Name: ${reportData.client.businessName || 'N/A'}`,
-          `DEA: ${reportData.client.deaNumber || 'N/A'}`,
           `${reportData.client.streetAddress || ''}`,
           `${reportData.client.city || ''}, ${reportData.client.state || ''} ${reportData.client.zipCode || ''}`
         ];
 
         customerInfo.forEach(info => {
           if (info.trim()) {
-            page.drawText(info, {
-              x: col3X,
-              y: y,
-              size: 7,
-              font: font,
-              color: rgb(0, 0, 0),
-            });
+            // Constrain customer info width to prevent overflow off page edge
+            const maxCustomerWidth = width - col3X - 10; // 10px margin from right edge
+            renderTextWithFit(page, info, col3X, y, maxCustomerWidth, font, 7, 5, rgb(0, 0, 0));
             y -= lineHeight - 3;
           }
         });
@@ -604,18 +720,18 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
 
       // Draw separator line under header
       page.drawLine({
-        start: { x: 40, y: height - 130 },
-        end: { x: width - 40, y: height - 130 },
+        start: { x: 40, y: height - 155 },
+        end: { x: width - 40, y: height - 155 },
         thickness: 2,
         color: rgb(0.2, 0.4, 0.8),
       });
 
-      return height - 145; // Return starting Y position for content
+      return height - 170; // Return starting Y position for content
     };
 
     let yPosition = drawHeader(page, currentPageNum);
 
-    // Table title
+    // Table title (removed duplicate "Service Event Inventory Report" heading)
     page.drawText('Inventory Items', {
       x: 40,
       y: yPosition,
@@ -625,9 +741,10 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
     });
     yPosition -= 18;
     
-    // Table header row - New column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Strength, Size, Form
-    const headers = ['NDC', 'Class', 'Qty', 'P/F', 'Product Name', 'Mfr', 'Strength', 'Size', 'Form'];
-    const xPositions = [40, 110, 145, 175, 200, 295, 345, 405, 465];
+    // Table header row - Column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Wholesaler, Strength, Size, Form
+    const headers = ['NDC', 'Class', 'Qty', 'P/F', 'Product Name', 'Manufacturer', 'Wholesaler', 'Strength', 'Size', 'Form'];
+    // OPTIMIZED column positions - More space for Product Name (160pt), Manufacturer (100pt), Wholesaler (60pt)
+    const xPositions = [40, 95, 118, 140, 160, 320, 420, 480, 520, 550];
 
     headers.forEach((header, index) => {
       page.drawText(header, {
@@ -696,17 +813,21 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
       const itemTotal = pricePerUnit * unitsPerPackage * quantity;
       totalPrice += itemTotal;
 
-      // New column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Strength, Size, Form
+      // Get wholesaler from client
+      const wholesalerName = reportData.client?.wholesaler || '-';
+
+      // Column order: NDC, Class, Qty, P/F, Product Name, Manufacturer, Wholesaler, Strength, Size, Form
       const rowData = [
-        (item.ndc11 || 'N/A').substring(0, 16),                        // NDC
+        item.ndc11 || 'N/A',                                            // NDC - full text
         item.dea_schedule || 'NC',                                      // Class (NC = Non-Controlled)
         quantity.toString(),                                            // Qty
         item.finished === true ? 'F' : item.finished === false ? 'P' : '-', // P/F
-        (item.itemName || item.productName || 'Unknown').substring(0, 22), // Product Name
-        (item.labeler_name || item.manufacturer || '').substring(0, 12),   // Manufacturer
-        (item.strength || '').substring(0, 14),                        // Strength
-        (item.packageSize || '').substring(0, 14),                     // Size
-        (item.dosageForm || item.form || '').substring(0, 30)         // Form
+        item.itemName || item.productName || 'Unknown',                 // Product Name - full text
+        item.labeler_name || item.manufacturer || '',                   // Manufacturer - full text
+        wholesalerName,                                                 // Wholesaler - full text
+        item.strength || '',                                            // Strength - full text
+        item.packageSize || '',                                         // Size - full text
+        item.dosageForm || item.form || ''                              // Form - full text
       ];
 
       // Highlight controlled substances
@@ -715,15 +836,16 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
       const textFont = item.dea_schedule === 'CII' ? boldFont : font;
 
       rowData.forEach((data, colIndex) => {
-        page.drawText(data, {
-          x: xPositions[colIndex],
-          y: yPosition,
-          size: 7.5,
-          font: (colIndex === 1 && isControlled) ? textFont : font,
-          color: (colIndex === 1 && item.dea_schedule === 'CII') ? textColor : rgb(0, 0, 0),
-        });
+        const currentX = xPositions[colIndex];
+        const nextX = xPositions[colIndex + 1] || 572; // Use page edge if last column
+        const maxWidth = nextX - currentX - 5; // 5px padding between columns
+        const cellFont = (colIndex === 1 && isControlled) ? textFont : font;
+        const cellColor = (colIndex === 1 && item.dea_schedule === 'CII') ? textColor : rgb(0, 0, 0);
+
+        // Use consistent 5.5pt font size for all cells
+        renderTextWithFit(page, data, currentX, yPosition, maxWidth, cellFont, 5.5, 5.5, cellColor);
       });
-      yPosition -= 12;
+      yPosition -= 14;  // Increased line height for better readability
     });
     
     // Draw line above total
@@ -838,8 +960,10 @@ async function generateInventoryPDF(reportData, companyInfo = null, wholesalerIn
     if (yPosition < 50) {
       yPosition = 30;
     }
-    currentPage.drawText('PDF generated by Direct Returns', {
-      x: width / 2 - 100,
+    const footerText = `PDF generated by ${company.name}`;
+    const footerWidth = font.widthOfTextAtSize(footerText, 8);
+    currentPage.drawText(footerText, {
+      x: width / 2 - (footerWidth / 2),
       y: yPosition,
       size: 8,
       font: font,
@@ -941,9 +1065,463 @@ async function generateCoordinateFinder() {
   }
 }
 
+/**
+ * Generate an invoice PDF grouped by manufacturer
+ * @param {Object} reportData - Report data including client info and line items
+ * @param {Object} companySettings - Company settings from database
+ * @param {Object} wholesalerInfo - Wholesaler information
+ * @returns {Promise<Buffer>} - Generated PDF as buffer
+ */
+async function generateInvoicePDF(reportData, companySettings = null, wholesalerInfo = null) {
+  try {
+    // Create a new PDF document
+    const pdfDoc = await PDFDocument.create();
+
+    // Use company settings from database, with fallback defaults
+    const company = companySettings ? {
+      name: companySettings.companyName || 'Direct Returns',
+      address: companySettings.addressLine1 || '',
+      addressLine2: companySettings.addressLine2 || '',
+      city: companySettings.city || '',
+      state: companySettings.state || '',
+      zipCode: companySettings.zipCode || '',
+      deaNumber: companySettings.deaNumber || ''
+    } : {
+      name: 'Direct Returns',
+      address: '123 Pharma Street',
+      addressLine2: '',
+      city: 'Medical City',
+      state: 'CA',
+      zipCode: '90210',
+      deaNumber: 'DR1234567'
+    };
+
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    // Group line items by manufacturer
+    const itemsByManufacturer = {};
+    const manufacturerTotals = {};
+
+    reportData.lineItems?.forEach(item => {
+      const manufacturer = item.labeler_name || item.manufacturer || 'Unknown Manufacturer';
+
+      if (!itemsByManufacturer[manufacturer]) {
+        itemsByManufacturer[manufacturer] = [];
+        manufacturerTotals[manufacturer] = 0;
+      }
+
+      itemsByManufacturer[manufacturer].push(item);
+
+      const pricePerUnit = item.pricePerUnit || 0;
+      const unitsPerPackage = item.unitsPerPackage || 1;
+      const quantity = item.packages || 0;
+      const itemTotal = pricePerUnit * unitsPerPackage * quantity;
+      manufacturerTotals[manufacturer] += itemTotal;
+    });
+
+    // Calculate pages needed (rough estimate)
+    const totalPages = 1; // We'll handle pagination dynamically
+    let currentPageNum = 1;
+
+    // First page
+    let page = pdfDoc.addPage([612, 792]); // Letter size
+    const { width, height } = page.getSize();
+
+    // Draw header function
+    const drawHeader = (page, pageNum) => {
+      let y = height - 30;
+      const col1X = 40;
+      const col2X = 220;
+      const col3X = 420;
+      const lineHeight = 12;
+
+      // Invoice Title at the very top - CENTERED
+      const reportTitle = 'INVOICE';
+      const titleFontSize = 18;
+      const titleWidth = font.widthOfTextAtSize(reportTitle, titleFontSize);
+      const centerX = (width - titleWidth) / 2;
+
+      page.drawText(reportTitle, {
+        x: centerX,
+        y: y,
+        size: titleFontSize,
+        font: boldFont,
+        color: rgb(0.2, 0.4, 0.8),
+      });
+      y -= 25;
+
+      // COLUMN 1 - Company Logo and Info
+      page.drawText(company.name.toUpperCase(), {
+        x: col1X,
+        y: y,
+        size: 14,
+        font: boldFont,
+        color: rgb(0.2, 0.4, 0.8),
+      });
+      y -= lineHeight + 8;
+
+      page.drawText(company.name, {
+        x: col1X,
+        y: y,
+        size: 9,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight;
+
+      if (company.address) {
+        page.drawText(`${company.address}`, {
+          x: col1X,
+          y: y,
+          size: 8,
+          font: font,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight - 2;
+      }
+
+      if (company.addressLine2) {
+        page.drawText(`${company.addressLine2}`, {
+          x: col1X,
+          y: y,
+          size: 8,
+          font: font,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight - 2;
+      }
+
+      if (company.city || company.state || company.zipCode) {
+        const cityStateZip = `${company.city}${company.city && (company.state || company.zipCode) ? ', ' : ''}${company.state} ${company.zipCode}`.trim();
+        page.drawText(cityStateZip, {
+          x: col1X,
+          y: y,
+          size: 8,
+          font: font,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight - 2;
+      }
+
+      if (company.deaNumber) {
+        page.drawText(`DEA: ${company.deaNumber}`, {
+          x: col1X,
+          y: y,
+          size: 8,
+          font: font,
+          color: rgb(0, 0, 0),
+        });
+      }
+
+      // COLUMN 3 - Invoice Info and Customer Details
+      y = height - 40;
+
+      // Invoice number and date
+      page.drawText(`Invoice #: ${reportData.client?.id || 'N/A'}-${Date.now()}`, {
+        x: col3X,
+        y: y,
+        size: 8,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight - 2;
+
+      page.drawText(`Date: ${new Date().toLocaleDateString('en-US')}`, {
+        x: col3X,
+        y: y,
+        size: 8,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight + 6;
+
+      // Customer Information
+      if (reportData.client) {
+        page.drawText('Bill To:', {
+          x: col3X,
+          y: y,
+          size: 8,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight;
+
+        const customerInfo = [
+          reportData.client.businessName || 'N/A',
+          reportData.client.streetAddress || '',
+          `${reportData.client.city || ''}, ${reportData.client.state || ''} ${reportData.client.zipCode || ''}`.trim()
+        ];
+
+        customerInfo.forEach(info => {
+          if (info.trim()) {
+            page.drawText(info, {
+              x: col3X,
+              y: y,
+              size: 7,
+              font: font,
+              color: rgb(0, 0, 0),
+            });
+            y -= lineHeight - 3;
+          }
+        });
+      }
+
+      // Draw separator line under header
+      page.drawLine({
+        start: { x: 40, y: height - 155 },
+        end: { x: width - 40, y: height - 155 },
+        thickness: 2,
+        color: rgb(0.2, 0.4, 0.8),
+      });
+
+      return height - 170;
+    };
+
+    let yPosition = drawHeader(page, currentPageNum);
+
+    // Grand total
+    let grandTotal = 0;
+
+    // Iterate through manufacturers
+    const manufacturers = Object.keys(itemsByManufacturer).sort();
+
+    for (const manufacturer of manufacturers) {
+      const items = itemsByManufacturer[manufacturer];
+      const manufacturerTotal = manufacturerTotals[manufacturer];
+      grandTotal += manufacturerTotal;
+
+      // Check if we need a new page for manufacturer header
+      if (yPosition < 200) {
+        page = pdfDoc.addPage([612, 792]);
+        currentPageNum++;
+        yPosition = drawHeader(page, currentPageNum);
+      }
+
+      // Manufacturer Header
+      page.drawText(`${manufacturer}`, {
+        x: 40,
+        y: yPosition,
+        size: 11,
+        font: boldFont,
+        color: rgb(0.2, 0.4, 0.8),
+      });
+      yPosition -= 18;
+
+      // Table headers for this manufacturer
+      const headers = ['Item Name', 'NDC', 'Qty', 'Price/Unit', 'Total'];
+      const xPositions = [40, 280, 380, 430, 510];
+
+      headers.forEach((header, index) => {
+        page.drawText(header, {
+          x: xPositions[index],
+          y: yPosition,
+          size: 8,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+      });
+      yPosition -= 5;
+
+      page.drawLine({
+        start: { x: 40, y: yPosition },
+        end: { x: 572, y: yPosition },
+        thickness: 0.5,
+        color: rgb(0, 0, 0),
+      });
+      yPosition -= 12;
+
+      // Render items for this manufacturer
+      for (const item of items) {
+        // Check if we need a new page
+        if (yPosition < 100) {
+          page = pdfDoc.addPage([612, 792]);
+          currentPageNum++;
+          yPosition = drawHeader(page, currentPageNum);
+          yPosition -= 20;
+
+          // Redraw manufacturer header
+          page.drawText(`${manufacturer} (continued)`, {
+            x: 40,
+            y: yPosition,
+            size: 11,
+            font: boldFont,
+            color: rgb(0.2, 0.4, 0.8),
+          });
+          yPosition -= 18;
+
+          headers.forEach((header, index) => {
+            page.drawText(header, {
+              x: xPositions[index],
+              y: yPosition,
+              size: 8,
+              font: boldFont,
+              color: rgb(0, 0, 0),
+            });
+          });
+          yPosition -= 5;
+
+          page.drawLine({
+            start: { x: 40, y: yPosition },
+            end: { x: 572, y: yPosition },
+            thickness: 0.5,
+            color: rgb(0, 0, 0),
+          });
+          yPosition -= 12;
+        }
+
+        const pricePerUnit = item.pricePerUnit || 0;
+        const unitsPerPackage = item.unitsPerPackage || 1;
+        const quantity = item.packages || 0;
+        const itemTotal = pricePerUnit * unitsPerPackage * quantity;
+
+        const rowData = [
+          item.itemName || item.productName || 'Unknown',
+          item.ndc11 || 'N/A',
+          quantity.toString(),
+          `$${pricePerUnit.toFixed(4)}`,
+          `$${itemTotal.toFixed(2)}`
+        ];
+
+        rowData.forEach((data, colIndex) => {
+          const currentX = xPositions[colIndex];
+          const nextX = xPositions[colIndex + 1] || 572; // Use page edge if last column
+          const maxWidth = nextX - currentX - 4; // 4px padding between columns to prevent any overlap
+
+          renderTextWithFit(page, data, currentX, yPosition, maxWidth, font, 7, 3.5, rgb(0, 0, 0));
+        });
+        yPosition -= 12;
+      }
+
+      // Manufacturer subtotal
+      yPosition -= 5;
+      page.drawLine({
+        start: { x: 430, y: yPosition },
+        end: { x: 572, y: yPosition },
+        thickness: 0.5,
+        color: rgb(0, 0, 0),
+      });
+      yPosition -= 12;
+
+      page.drawText('Subtotal:', {
+        x: 430,
+        y: yPosition,
+        size: 9,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+
+      page.drawText(`$${manufacturerTotal.toFixed(2)}`, {
+        x: 510,
+        y: yPosition,
+        size: 9,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      yPosition -= 25;
+    }
+
+    // Subtotal, Invoice Fee, and Grand Total
+    if (yPosition < 150) {
+      page = pdfDoc.addPage([612, 792]);
+      yPosition = height - 100;
+    }
+
+    // Calculate invoice fee based on client's invoice percentage
+    const invoicePercentage = reportData.client?.invoicePercentage || 0;
+    const subtotal = grandTotal;
+    const invoiceFee = subtotal * (invoicePercentage / 100);
+    const finalTotal = subtotal + invoiceFee;
+
+    // Subtotal line
+    yPosition -= 10;
+    page.drawText('Subtotal:', {
+      x: 350,
+      y: yPosition,
+      size: 11,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+
+    page.drawText(`$${subtotal.toFixed(2)}`, {
+      x: 490,
+      y: yPosition,
+      size: 11,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    yPosition -= 20;
+
+    // Invoice Fee line (if applicable)
+    if (invoicePercentage > 0) {
+      page.drawText(`Invoice Fee (${invoicePercentage}%):`, {
+        x: 350,
+        y: yPosition,
+        size: 11,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+
+      page.drawText(`$${invoiceFee.toFixed(2)}`, {
+        x: 490,
+        y: yPosition,
+        size: 11,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      yPosition -= 20;
+    }
+
+    // Separator line before grand total
+    page.drawLine({
+      start: { x: 350, y: yPosition },
+      end: { x: 572, y: yPosition },
+      thickness: 2,
+      color: rgb(0.2, 0.4, 0.8),
+    });
+    yPosition -= 20;
+
+    // Grand Total
+    page.drawText('GRAND TOTAL:', {
+      x: 350,
+      y: yPosition,
+      size: 13,
+      font: boldFont,
+      color: rgb(0.2, 0.4, 0.8),
+    });
+
+    page.drawText(`$${finalTotal.toFixed(2)}`, {
+      x: 490,
+      y: yPosition,
+      size: 13,
+      font: boldFont,
+      color: rgb(0.2, 0.4, 0.8),
+    });
+
+    // Footer
+    const footerText = `Invoice generated by ${company.name}`;
+    const footerWidth = font.widthOfTextAtSize(footerText, 8);
+    page.drawText(footerText, {
+      x: width / 2 - (footerWidth / 2),
+      y: 30,
+      size: 8,
+      font: font,
+      color: rgb(0.5, 0.5, 0.5),
+    });
+
+    // Serialize the PDFDocument to bytes
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
+  } catch (error) {
+    console.error('Error generating invoice PDF:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   generateForm222PDF,
   generateInventoryPDF,
+  generateInvoicePDF,
   generateCoordinateFinder,
   updateForm222Coordinates,
   getForm222Coordinates,

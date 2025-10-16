@@ -4,6 +4,8 @@ const createClientRoutes = require('./clientRoutes');
 const createReportRoutes = require('./reportRoutes');
 const createManualEntryRoutes = require('./manualEntryRoutes');
 const createLabelerRoutes = require('./labelerRoutes');
+const createWholesalerRoutes = require('./wholesalerRoutes');
+const createCompanySettingsRoutes = require('./companySettingsRoutes');
 const createPDFRoutes = require('./pdfRoutes');
 
 /**
@@ -18,6 +20,8 @@ function registerRoutes(app, controllers) {
     reportController,
     manualEntryController,
     labelerController,
+    wholesalerController,
+    companySettingsController,
     pdfController
   } = controllers;
 
@@ -27,6 +31,8 @@ function registerRoutes(app, controllers) {
   app.use(createReportRoutes(reportController));
   app.use(createManualEntryRoutes(manualEntryController));
   app.use(createLabelerRoutes(labelerController));
+  app.use(createWholesalerRoutes(wholesalerController));
+  app.use(createCompanySettingsRoutes(companySettingsController));
   app.use(createPDFRoutes(pdfController));
 
   console.log('✅ All routes registered successfully');

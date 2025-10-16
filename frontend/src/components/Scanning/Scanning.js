@@ -1,12 +1,14 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Button, Form, Alert, Modal } from "react-bootstrap";
+import { Button, Alert, Modal } from "react-bootstrap";
 import { ArrowUpSquareFill, BarChartFill } from "react-bootstrap-icons";
 import { Stack } from "react-bootstrap";
 import { ClientContext } from "../../context/ClientContext";
 import { useNavigate } from "react-router-dom";
 import Wrapper from "../Layout/Wrapper";
 import ClientSelector from "../Admin/ClientSelector";
-import { validateDEANumber } from "../../utils/deaValidator";
+import FormModal from "../Common/DataTable/FormModal";
+import { getClientFormFields } from "../../utils/clientFormFields";
+import apiService from "../../services/ApiService";
 import "./scanning.css";
 
 const Scanning = () => {
@@ -30,21 +32,22 @@ const Scanning = () => {
   const [showEditClientModal, setShowEditClientModal] = useState(false);
   const [clientRefreshKey, setClientRefreshKey] = useState(0);
   const [editingClient, setEditingClient] = useState(null);
-  const [newClientData, setNewClientData] = useState({
-    businessName: "",
-    deaNumber: "",
-    deaExpirationDate: "",
-    stateLicenseNumber: "",
-    streetAddress: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    phoneNumber: "",
-    contactName: ""
-  });
-  const [deaValidationError, setDeaValidationError] = useState("");
-  const [editDeaValidationError, setEditDeaValidationError] = useState("");
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [wholesalers, setWholesalers] = useState([]);
+
+  // Load wholesalers on component mount
+  useEffect(() => {
+    const fetchWholesalers = async () => {
+      try {
+        const response = await apiService.getWholesalers();
+        setWholesalers(response.wholesalers || []);
+      } catch (error) {
+        console.error('Failed to load wholesalers:', error);
+        setWholesalers([]);
+      }
+    };
+    fetchWholesalers();
+  }, []);
 
   // Load clients on component mount
   useEffect(() => {
@@ -85,39 +88,13 @@ const Scanning = () => {
     navigate(`/reports/client/${clientId}`);
   };
 
-  const handleAddClient = async () => {
-    if (!newClientData.businessName.trim() || !newClientData.deaNumber.trim() || 
-        !newClientData.streetAddress.trim() || !newClientData.city.trim() || 
-        !newClientData.state.trim() || !newClientData.zipCode.trim()) {
-      console.error("All fields are required");
-      return;
-    }
-
-    // Validate DEA number before submission
-    const deaValidation = validateDEANumber(newClientData.deaNumber);
-    if (!deaValidation.isValid) {
-      setDeaValidationError(deaValidation.error);
-      return;
-    }
+  const handleAddClient = async (data) => {
     try {
       clearError();
-      const newClient = await createClient(newClientData);
+      const newClient = await createClient(data);
       await handleClientSelection(newClient.id);
       setShowAddClientModal(false);
-      setDeaValidationError("");
       setClientRefreshKey(prev => prev + 1);
-      setNewClientData({
-        businessName: "",
-        deaNumber: "",
-        deaExpirationDate: "",
-        stateLicenseNumber: "",
-        streetAddress: "",
-        city: "",
-        state: "",
-        zipCode: "",
-        phoneNumber: "",
-        contactName: ""
-      });
     } catch (error) {
       console.error("Failed to add client:", error.message || error);
     }
@@ -128,24 +105,12 @@ const Scanning = () => {
       alert("Please select a client to edit.");
       return;
     }
-    
+
     const clientId = localSelectedClient || (selectedClient && selectedClient.id);
     const clientToEdit = clients.find(client => client.id === clientId);
-    
+
     if (clientToEdit) {
-      setEditingClient({
-        id: clientToEdit.id,
-        businessName: clientToEdit.businessName || '',
-        deaNumber: clientToEdit.deaNumber || '',
-        deaExpirationDate: clientToEdit.deaExpirationDate || '',
-        stateLicenseNumber: clientToEdit.stateLicenseNumber || '',
-        streetAddress: clientToEdit.streetAddress || '',
-        city: clientToEdit.city || '',
-        state: clientToEdit.state || '',
-        zipCode: clientToEdit.zipCode || '',
-        phoneNumber: clientToEdit.phoneNumber || '',
-        contactName: clientToEdit.contactName || ''
-      });
+      setEditingClient(clientToEdit);
       setShowEditClientModal(true);
       clearError();
     } else {
@@ -153,43 +118,15 @@ const Scanning = () => {
     }
   };
 
-  const handleUpdateClient = async () => {
+  const handleUpdateClient = async (data) => {
     if (!editingClient) return;
-    
-    if (!editingClient.businessName.trim() || !editingClient.deaNumber.trim() || 
-        !editingClient.streetAddress.trim() || !editingClient.city.trim() || 
-        !editingClient.state.trim() || !editingClient.zipCode.trim()) {
-      console.error("All fields are required");
-      return;
-    }
 
-    // Validate DEA number before submission
-    const deaValidation = validateDEANumber(editingClient.deaNumber);
-    if (!deaValidation.isValid) {
-      setEditDeaValidationError(deaValidation.error);
-      return;
-    }
-    
     try {
       clearError();
-      await updateClient(editingClient.id, {
-        businessName: editingClient.businessName,
-        deaNumber: editingClient.deaNumber,
-        deaExpirationDate: editingClient.deaExpirationDate,
-        stateLicenseNumber: editingClient.stateLicenseNumber,
-        streetAddress: editingClient.streetAddress,
-        city: editingClient.city,
-        state: editingClient.state,
-        zipCode: editingClient.zipCode,
-        phoneNumber: editingClient.phoneNumber,
-        contactName: editingClient.contactName
-      });
-      
+      await updateClient(editingClient.id, data);
       setShowEditClientModal(false);
       setEditingClient(null);
-      setEditDeaValidationError("");
       setClientRefreshKey(prev => prev + 1);
-      
     } catch (error) {
       console.error("Failed to update client:", error.message || error);
     }
@@ -206,7 +143,6 @@ const Scanning = () => {
       setShowEditClientModal(false);
       setShowDeleteConfirmation(false);
       setEditingClient(null);
-      setEditDeaValidationError("");
 
       // Reset local selected client if it was the deleted one
       if (localSelectedClient === editingClient.id) {
@@ -291,271 +227,31 @@ const Scanning = () => {
       </Stack>
 
       {/* Add Client Modal */}
-      <Modal show={showAddClientModal} onHide={() => {
-        setShowAddClientModal(false);
-        setDeaValidationError("");
-      }}>
-        <Modal.Header closeButton>
-          <Modal.Title>Add New Client</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Business Name *</Form.Label>
-              <Form.Control
-                type="text"
-                value={newClientData.businessName}
-                onChange={(e) => setNewClientData({...newClientData, businessName: e.target.value})}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>DEA Number *</Form.Label>
-              <Form.Control
-                type="text"
-                value={newClientData.deaNumber}
-                onChange={(e) => {
-                  const deaValue = e.target.value;
-                  setNewClientData({...newClientData, deaNumber: deaValue});
-                  if (deaValue) {
-                    const validation = validateDEANumber(deaValue);
-                    setDeaValidationError(validation.isValid ? "" : validation.error);
-                  } else {
-                    setDeaValidationError("");
-                  }
-                }}
-                isInvalid={!!deaValidationError}
-                required
-              />
-              {deaValidationError && (
-                <Form.Control.Feedback type="invalid">
-                  {deaValidationError}
-                </Form.Control.Feedback>
-              )}
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>DEA Expiration Date</Form.Label>
-              <Form.Control
-                type="date"
-                value={newClientData.deaExpirationDate}
-                onChange={(e) => setNewClientData({...newClientData, deaExpirationDate: e.target.value})}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>State License Number</Form.Label>
-              <Form.Control
-                type="text"
-                value={newClientData.stateLicenseNumber}
-                onChange={(e) => setNewClientData({...newClientData, stateLicenseNumber: e.target.value})}
-                placeholder="e.g., 12345-ABC"
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Street Address *</Form.Label>
-              <Form.Control
-                type="text"
-                value={newClientData.streetAddress}
-                onChange={(e) => setNewClientData({...newClientData, streetAddress: e.target.value})}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>City *</Form.Label>
-              <Form.Control
-                type="text"
-                value={newClientData.city}
-                onChange={(e) => setNewClientData({...newClientData, city: e.target.value})}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>State *</Form.Label>
-              <Form.Control
-                type="text"
-                value={newClientData.state}
-                onChange={(e) => setNewClientData({...newClientData, state: e.target.value})}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Zip Code *</Form.Label>
-              <Form.Control
-                type="text"
-                value={newClientData.zipCode}
-                onChange={(e) => setNewClientData({...newClientData, zipCode: e.target.value})}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Phone Number</Form.Label>
-              <Form.Control
-                type="text"
-                value={newClientData.phoneNumber}
-                onChange={(e) => setNewClientData({...newClientData, phoneNumber: e.target.value})}
-                placeholder="(555) 123-4567"
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Contact Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={newClientData.contactName}
-                onChange={(e) => setNewClientData({...newClientData, contactName: e.target.value})}
-                placeholder="John Doe"
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer className="modal-footer-mobile">
-          <Button variant="secondary" onClick={() => {
-            setShowAddClientModal(false);
-            setDeaValidationError("");
-          }} className="modal-footer-btn">
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleAddClient} className="modal-footer-btn">
-            Add Client
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <FormModal
+        show={showAddClientModal}
+        onHide={() => setShowAddClientModal(false)}
+        onSave={handleAddClient}
+        title="Add New Client"
+        formFields={getClientFormFields(wholesalers)}
+        error={error}
+        submitButtonText="Add Client"
+      />
 
       {/* Edit Client Modal */}
-      <Modal show={showEditClientModal} onHide={() => {
-        setShowEditClientModal(false);
-        setEditingClient(null);
-        setEditDeaValidationError("");
-        clearError();
-      }}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Client</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Business Name *</Form.Label>
-              <Form.Control
-                type="text"
-                value={editingClient?.businessName || ''}
-                onChange={(e) => setEditingClient(prev => ({...prev, businessName: e.target.value}))}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>DEA Number *</Form.Label>
-              <Form.Control
-                type="text"
-                value={editingClient?.deaNumber || ''}
-                onChange={(e) => {
-                  const deaValue = e.target.value;
-                  setEditingClient(prev => ({...prev, deaNumber: deaValue}));
-                  if (deaValue) {
-                    const validation = validateDEANumber(deaValue);
-                    setEditDeaValidationError(validation.isValid ? "" : validation.error);
-                  } else {
-                    setEditDeaValidationError("");
-                  }
-                }}
-                isInvalid={!!editDeaValidationError}
-                required
-              />
-              {editDeaValidationError && (
-                <Form.Control.Feedback type="invalid">
-                  {editDeaValidationError}
-                </Form.Control.Feedback>
-              )}
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>DEA Expiration Date</Form.Label>
-              <Form.Control
-                type="date"
-                value={editingClient?.deaExpirationDate || ''}
-                onChange={(e) => setEditingClient(prev => ({...prev, deaExpirationDate: e.target.value}))}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>State License Number</Form.Label>
-              <Form.Control
-                type="text"
-                value={editingClient?.stateLicenseNumber || ''}
-                onChange={(e) => setEditingClient(prev => ({...prev, stateLicenseNumber: e.target.value}))}
-                placeholder="e.g., 12345-ABC"
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Street Address *</Form.Label>
-              <Form.Control
-                type="text"
-                value={editingClient?.streetAddress || ''}
-                onChange={(e) => setEditingClient(prev => ({...prev, streetAddress: e.target.value}))}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>City *</Form.Label>
-              <Form.Control
-                type="text"
-                value={editingClient?.city || ''}
-                onChange={(e) => setEditingClient(prev => ({...prev, city: e.target.value}))}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>State *</Form.Label>
-              <Form.Control
-                type="text"
-                value={editingClient?.state || ''}
-                onChange={(e) => setEditingClient(prev => ({...prev, state: e.target.value}))}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Zip Code *</Form.Label>
-              <Form.Control
-                type="text"
-                value={editingClient?.zipCode || ''}
-                onChange={(e) => setEditingClient(prev => ({...prev, zipCode: e.target.value}))}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Phone Number</Form.Label>
-              <Form.Control
-                type="text"
-                value={editingClient?.phoneNumber || ''}
-                onChange={(e) => setEditingClient(prev => ({...prev, phoneNumber: e.target.value}))}
-                placeholder="(555) 123-4567"
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Contact Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={editingClient?.contactName || ''}
-                onChange={(e) => setEditingClient(prev => ({...prev, contactName: e.target.value}))}
-                placeholder="John Doe"
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer className="modal-footer-mobile">
-          <Button variant="danger" onClick={() => setShowDeleteConfirmation(true)} className="modal-footer-btn">
-            Delete Client
-          </Button>
-          <div className="ms-auto modal-footer-right">
-            <Button variant="secondary" className="me-2 modal-footer-btn" onClick={() => {
-              setShowEditClientModal(false);
-              setEditingClient(null);
-              setEditDeaValidationError("");
-              clearError();
-            }}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleUpdateClient} className="modal-footer-btn">
-              Update Client
-            </Button>
-          </div>
-        </Modal.Footer>
-      </Modal>
+      <FormModal
+        show={showEditClientModal}
+        onHide={() => {
+          setShowEditClientModal(false);
+          setEditingClient(null);
+          clearError();
+        }}
+        onSave={handleUpdateClient}
+        title="Edit Client"
+        formFields={getClientFormFields(wholesalers)}
+        initialData={editingClient}
+        error={error}
+        submitButtonText="Update Client"
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal show={showDeleteConfirmation} onHide={() => setShowDeleteConfirmation(false)}>

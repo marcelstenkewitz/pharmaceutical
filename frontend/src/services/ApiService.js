@@ -304,6 +304,65 @@ class ApiService {
     }
   }
 
+  // --- WHOLESALERS METHODS ---
+  async getWholesalers() {
+    try {
+      const response = await this.client.get('/wholesalers');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error, 'Failed to get wholesalers');
+    }
+  }
+
+  async saveWholesaler(wholesalerData) {
+    try {
+      const response = await this.client.post('/wholesalers', wholesalerData);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error, 'Failed to save wholesaler');
+    }
+  }
+
+  async getWholesaler(wholesalerName) {
+    try {
+      const response = await this.client.get(`/wholesalers/${encodeURIComponent(wholesalerName)}`);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw this.handleError(error, 'Failed to get wholesaler');
+    }
+  }
+
+  async deleteWholesaler(wholesalerName) {
+    try {
+      const response = await this.client.delete(`/wholesalers/${encodeURIComponent(wholesalerName)}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error, 'Failed to delete wholesaler');
+    }
+  }
+
+  // --- COMPANY SETTINGS METHODS ---
+  async getCompanySettings() {
+    try {
+      const response = await this.client.get('/company-settings');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error, 'Failed to get company settings');
+    }
+  }
+
+  async updateCompanySettings(settings) {
+    try {
+      const response = await this.client.put('/company-settings', settings);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error, 'Failed to update company settings');
+    }
+  }
+
   // --- UTILITY METHODS ---
   setAuthToken(token) {
     if (token) {

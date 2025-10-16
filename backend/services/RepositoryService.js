@@ -2,6 +2,8 @@ const ClientRepository = require('../repositories/ClientRepository');
 const ReportRepository = require('../repositories/ReportRepository');
 const ManualEntryRepository = require('../repositories/ManualEntryRepository');
 const LabelerRepository = require('../repositories/LabelerRepository');
+const WholesalerRepository = require('../repositories/WholesalerRepository');
+const CompanySettingsRepository = require('../repositories/CompanySettingsRepository');
 
 class RepositoryService {
   constructor(dataDir) {
@@ -10,6 +12,8 @@ class RepositoryService {
     this._reports = null;
     this._manualEntries = null;
     this._labelers = null;
+    this._wholesalers = null;
+    this._companySettings = null;
   }
 
   get clients() {
@@ -40,12 +44,28 @@ class RepositoryService {
     return this._labelers;
   }
 
+  get wholesalers() {
+    if (!this._wholesalers) {
+      this._wholesalers = new WholesalerRepository(this.dataDir);
+    }
+    return this._wholesalers;
+  }
+
+  get companySettings() {
+    if (!this._companySettings) {
+      this._companySettings = new CompanySettingsRepository(this.dataDir);
+    }
+    return this._companySettings;
+  }
+
   ensureInitialized() {
     try {
       this.clients.count();
       this.reports.count();
       this.manualEntries.count();
       this.labelers.count();
+      this.wholesalers.count();
+      this.companySettings.count();
       console.log('All repositories initialized successfully');
       return true;
     } catch (error) {
@@ -104,6 +124,18 @@ class RepositoryService {
       };
     } catch (error) {
       health.repositories.labelers = {
+        status: 'error',
+        error: error.message
+      };
+    }
+
+    try {
+      health.repositories.wholesalers = {
+        status: 'healthy',
+        count: this.wholesalers.count()
+      };
+    } catch (error) {
+      health.repositories.wholesalers = {
         status: 'error',
         error: error.message
       };

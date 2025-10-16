@@ -104,7 +104,7 @@ const FormModal = ({
   };
 
   const renderField = (field) => {
-    const value = formData[field.name] || '';
+    const value = formData[field.name] ?? '';
     const hasError = validationErrors[field.name];
     const isEditing = !!initialData;
 
@@ -157,6 +157,7 @@ const FormModal = ({
           <Form.Control
             type={field.type || 'text'}
             {...commonProps}
+            value={value || ''}
           />
         );
     }

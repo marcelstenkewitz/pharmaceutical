@@ -12,6 +12,9 @@
     "zipCode": "90210",
     "phoneNumber": "(555) 123-4567",
     "contactName": "Dr. Sarah Johnson",
+    "wholesaler": "McKesson Corporation",
+    "accountNumber": "MCK-LA-12345",
+    "invoicePercentage": 15,
     "reports": [
       "4533a425-6ec4-4c8d-b73d-a3038ac7479b",
       "c5889531-08eb-469d-8590-1967239e8ea8",
@@ -33,6 +36,9 @@
     "zipCode": "94102",
     "phoneNumber": "(555) 987-6543",
     "contactName": "Dr. Michael Chen",
+    "wholesaler": "Cardinal Health",
+    "accountNumber": "CAR-SF-67890",
+    "invoicePercentage": 20,
     "reports": [
       "59de53ab-3fa2-4bb3-8d70-82df2aa792f4",
       "d2338950-c576-4601-bc03-cdc001ddf320"
@@ -53,6 +59,9 @@
     "zipCode": "93720",
     "phoneNumber": "(555) 555-5555",
     "contactName": "Dr. Emily Rodriguez",
+    "wholesaler": "AmerisourceBergen",
+    "accountNumber": "ABC-FR-11111",
+    "invoicePercentage": 25,
     "reports": [
       "c7a429e7-50b9-4339-aa53-a5b0a1e57a08",
       "973a78f3-efa7-42d5-915e-4418f017c07e"

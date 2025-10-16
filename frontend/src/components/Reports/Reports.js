@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import apiService from '../../services/ApiService';
 import GenerateForm222Button from './GenerateForm222Button';
 import GenerateInventoryButton from './GenerateInventoryButton';
+import GenerateInvoiceButton from './GenerateInvoiceButton';
 import ClientBadge from '../Common/ClientBadge';
 import ClientName from '../Common/ClientName';
 import './reports.css';
@@ -322,6 +323,14 @@ const Reports = () => {
                         size="sm"
                         className="report-btn"
                       />
+                      <GenerateInvoiceButton
+                        clientId={clientId}
+                        reportId={report.id}
+                        report={report}
+                        variant="outline-info"
+                        size="sm"
+                        className="report-btn"
+                      />
                       <GenerateForm222Button
                         clientId={clientId}
                         reportId={report.id}
@@ -357,8 +366,9 @@ const Reports = () => {
                               <th>Pricing</th>
                               <th>Total Price</th>
                               <th>DEA</th>
-                              <th className="hide-mobile">Labeler</th>
-                              <th className="hide-mobile">Notes for Return</th>
+                              <th className="hide-mobile fw-bold">Wholesaler</th>
+                              <th className="hide-mobile fw-bold">Manufacturer</th>
+                              <th className="hide-mobile fw-bold">Notes for Return</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -397,11 +407,11 @@ const Reports = () => {
                                 <td className="text-end">
                                   <div>
                                     <strong>${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'}</strong>
-                                    <small className="text-muted d-block">per {item.pricingUnit || 'unit'}</small>
+                                    <small className="text-muted d-block"><strong>per {item.pricingUnit || 'unit'}</strong></small>
                                   </div>
                                   <div className="mt-1">
-                                    <span className="text-info">${item.pricePerPackage ? item.pricePerPackage.toFixed(2) : '0.00'}</span>
-                                    <small className="text-muted d-block">per package</small>
+                                    <strong className="text-info">${item.pricePerPackage ? item.pricePerPackage.toFixed(2) : '0.00'}</strong>
+                                    <small className="text-muted d-block"><strong>per package</strong></small>
                                   </div>
                                 </td>
                                 <td className="text-end">
@@ -409,11 +419,11 @@ const Reports = () => {
                                 </td>
                                 <td>
                                   {item.dea_schedule ? (
-                                    <Badge 
-                                      bg={item.dea_schedule === 'CII' ? 'danger' : 
+                                    <Badge
+                                      bg={item.dea_schedule === 'CII' ? 'danger' :
                                           item.dea_schedule === 'CIII' ? 'warning' :
                                           item.dea_schedule === 'CIV' || item.dea_schedule === 'CV' ? 'info' : 'secondary'}
-                                      title={item.dea_schedule === 'CII' ? 'Schedule II - Requires Form 222' : 
+                                      title={item.dea_schedule === 'CII' ? 'Schedule II - Requires Form 222' :
                                              `Schedule ${item.dea_schedule.substring(1)} Controlled Substance`}
                                     >
                                       {item.dea_schedule}
@@ -422,6 +432,7 @@ const Reports = () => {
                                     <span className="text-muted">-</span>
                                   )}
                                 </td>
+                                <td className="hide-mobile">{clientInfo?.wholesaler || 'N/A'}</td>
                                 <td className="hide-mobile">{item.labeler_name || 'N/A'}</td>
                                 <td className="hide-mobile return-instructions-column">
                                   <div className="text-truncate" title={getReturnInstructions(item.labeler_name)}>
@@ -469,7 +480,7 @@ const Reports = () => {
                             </div>
                             <div className="mobile-item-detail">
                               <span className="mobile-item-label">Price/Unit:</span>
-                              <span>${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'} per {item.pricingUnit || 'unit'}</span>
+                              <strong>${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'} per {item.pricingUnit || 'unit'}</strong>
                             </div>
                             {item.dea_schedule && (
                               <div className="mobile-item-detail">
@@ -484,7 +495,11 @@ const Reports = () => {
                               </div>
                             )}
                             <div className="mobile-item-detail">
-                              <span className="mobile-item-label">Labeler:</span>
+                              <span className="mobile-item-label">Wholesaler:</span>
+                              <span>{clientInfo?.wholesaler || 'N/A'}</span>
+                            </div>
+                            <div className="mobile-item-detail">
+                              <span className="mobile-item-label">Manufacturer:</span>
                               <span>{item.labeler_name || 'N/A'}</span>
                             </div>
                             <div className="mobile-item-detail">
@@ -543,7 +558,6 @@ const Reports = () => {
                     </div>
                     <div className="col-md-6">
                       <p><strong>Client:</strong> <ClientName client={clientInfo} /></p>
-                      {clientInfo?.deaNumber && <p><strong>DEA Number:</strong> <code>{clientInfo.deaNumber}</code></p>}
                       {clientInfo?.streetAddress && (
                         <p><strong>Address:</strong> {clientInfo.streetAddress}, {clientInfo.city}, {clientInfo.state} {clientInfo.zipCode}</p>
                       )}
@@ -551,48 +565,75 @@ const Reports = () => {
                     </div>
                   </div>
                   
-                  {selectedReport.lineItems && selectedReport.lineItems.length > 0 && (
-                    <>
-                      <hr />
-                      <div className="row">
-                        <div className="col-md-3 col-6">
-                          <div className="text-center">
-                            <div className="h4 text-primary mb-0">
-                              {selectedReport.lineItems.reduce((sum, item) => sum + (item.packages || 0), 0)}
+                  {selectedReport.lineItems && selectedReport.lineItems.length > 0 && (() => {
+                    const subtotal = selectedReport.lineItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+                    const invoicePercentage = clientInfo?.invoicePercentage || 0;
+                    const invoiceProfit = subtotal * (invoicePercentage / 100);
+                    const grandTotal = subtotal + invoiceProfit;
+
+                    return (
+                      <>
+                        <hr />
+                        <div className="row">
+                          <div className="col-lg-2 col-md-4 col-6 mb-3">
+                            <div className="text-center">
+                              <div className="h4 text-primary mb-0">
+                                {selectedReport.lineItems.reduce((sum, item) => sum + (item.packages || 0), 0)}
+                              </div>
+                              <small className="text-muted">Total Packages</small>
                             </div>
-                            <small className="text-muted">Total Packages</small>
+                          </div>
+                          <div className="col-lg-2 col-md-4 col-6 mb-3">
+                            <div className="text-center">
+                              <div className="h4 text-success mb-0">
+                                ${subtotal.toFixed(2)}
+                              </div>
+                              <small className="text-muted">Subtotal</small>
+                            </div>
+                          </div>
+                          {invoicePercentage > 0 && (
+                            <>
+                              <div className="col-lg-2 col-md-4 col-6 mb-3">
+                                <div className="text-center">
+                                  <div className="h4 text-info mb-0">
+                                    ${invoiceProfit.toFixed(2)}
+                                  </div>
+                                  <small className="text-muted">Invoice Profit ({invoicePercentage}%)</small>
+                                </div>
+                              </div>
+                              <div className="col-lg-2 col-md-4 col-6 mb-3">
+                                <div className="text-center">
+                                  <div className="h4 text-success mb-0 fw-bold">
+                                    ${grandTotal.toFixed(2)}
+                                  </div>
+                                  <small className="text-muted fw-bold">Grand Total</small>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                          <div className="col-lg-2 col-md-4 col-6 mb-3">
+                            <div className="text-center">
+                              <div className="h4 text-danger mb-0">
+                                {selectedReport.lineItems.filter(item => item.dea_schedule === 'CII' || item.dea_schedule === 'CI').length}
+                              </div>
+                              <small className="text-muted schedule-text d-block">
+                                <span className="d-none d-md-inline">Schedule I/II</span>
+                                <span className="d-md-none">CI/CII</span>
+                              </small>
+                            </div>
+                          </div>
+                          <div className="col-lg-2 col-md-4 col-6 mb-3">
+                            <div className="text-center">
+                              <div className="h4 text-warning mb-0">
+                                {selectedReport.lineItems.filter(item => item.isManualEntry).length}
+                              </div>
+                              <small className="text-muted">Manual Entries</small>
+                            </div>
                           </div>
                         </div>
-                        <div className="col-md-3 col-6">
-                          <div className="text-center">
-                            <div className="h4 text-success mb-0">
-                              ${selectedReport.lineItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0).toFixed(2)}
-                            </div>
-                            <small className="text-muted">Total Value</small>
-                          </div>
-                        </div>
-                        <div className="col-md-3 col-6">
-                          <div className="text-center">
-                            <div className="h4 text-danger mb-0">
-                              {selectedReport.lineItems.filter(item => item.dea_schedule === 'CII' || item.dea_schedule === 'CI').length}
-                            </div>
-                            <small className="text-muted schedule-text d-block">
-                              <span className="d-none d-md-inline">Schedule I/II</span>
-                              <span className="d-md-none">CI/CII</span>
-                            </small>
-                          </div>
-                        </div>
-                        <div className="col-md-3 col-6">
-                          <div className="text-center">
-                            <div className="h4 text-warning mb-0">
-                              {selectedReport.lineItems.filter(item => item.isManualEntry).length}
-                            </div>
-                            <small className="text-muted">Manual Entries</small>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                      </>
+                    );
+                  })()}
                 </Card.Body>
               </Card>
               
@@ -617,8 +658,9 @@ const Reports = () => {
                             <th style={{minWidth: '90px'}} className="text-end">Price/Unit</th>
                             <th style={{minWidth: '100px'}} className="text-end">Total Price</th>
                             <th style={{minWidth: '70px'}}>DEA</th>
-                            <th style={{minWidth: '150px'}}>Labeler</th>
-                            <th style={{minWidth: '200px'}}>Notes for Return</th>
+                            <th style={{minWidth: '120px'}} className="fw-bold">Wholesaler</th>
+                            <th style={{minWidth: '150px'}} className="fw-bold">Manufacturer</th>
+                            <th style={{minWidth: '200px'}} className="fw-bold">Notes for Return</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -666,7 +708,7 @@ const Reports = () => {
                                 </div>
                               </td>
                               <td>{item.packages}</td>
-                              <td className="text-end">${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'}</td>
+                              <td className="text-end"><strong>${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'}</strong></td>
                               <td className="text-end">
                                 <strong className="text-success">${item.totalPrice ? item.totalPrice.toFixed(2) : '0.00'}</strong>
                               </td>
@@ -685,6 +727,7 @@ const Reports = () => {
                                   <span className="text-muted">-</span>
                                 )}
                               </td>
+                              <td>{clientInfo?.wholesaler || 'N/A'}</td>
                               <td>{item.labeler_name || 'N/A'}</td>
                               <td className="return-instructions-modal">
                                 {getReturnInstructions(item.labeler_name)}
@@ -735,7 +778,7 @@ const Reports = () => {
                               </div>
                             </div>
                             <div className="mb-1"><strong>Quantity:</strong> {item.packages}</div>
-                            <div className="mb-1"><strong>Price/Unit:</strong> ${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'} per {item.pricingUnit || 'unit'}</div>
+                            <div className="mb-1"><strong>Price/Unit:</strong> <strong>${item.pricePerUnit ? item.pricePerUnit.toFixed(4) : '0.0000'} per {item.pricingUnit || 'unit'}</strong></div>
                             <div className="mb-1"><strong>Total Price:</strong> <strong className="text-success">${item.totalPrice ? item.totalPrice.toFixed(2) : '0.00'}</strong></div>
                             <div className="mb-1">
                               <strong>DEA Schedule:</strong> {item.dea_schedule ? (
@@ -751,7 +794,8 @@ const Reports = () => {
                                 <span className="text-muted">Not Controlled</span>
                               )}
                             </div>
-                            <div className="mb-1"><strong>Labeler:</strong> {item.labeler_name || 'N/A'}</div>
+                            <div className="mb-1"><strong>Wholesaler:</strong> {clientInfo?.wholesaler || 'N/A'}</div>
+                            <div className="mb-1"><strong>Manufacturer:</strong> {item.labeler_name || 'N/A'}</div>
                             <div><strong>Return Notes:</strong> {getReturnInstructions(item.labeler_name)}</div>
                           </div>
                         </div>
@@ -786,6 +830,14 @@ const Reports = () => {
                         reportId={selectedReport.id}
                         report={selectedReport}
                         variant="outline-success"
+                        size="sm"
+                        className="modal-action-btn"
+                      />
+                      <GenerateInvoiceButton
+                        clientId={clientId}
+                        reportId={selectedReport.id}
+                        report={selectedReport}
+                        variant="outline-info"
                         size="sm"
                         className="modal-action-btn"
                       />

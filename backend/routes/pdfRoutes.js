@@ -1,5 +1,4 @@
 const express = require('express');
-const router = express.Router();
 
 /**
  * PDF Generation route handler
@@ -7,6 +6,7 @@ const router = express.Router();
  * @returns {express.Router} Configured router
  */
 function createPDFRoutes(pdfController) {
+  const router = express.Router();
   // Generate Form 222 PDF (GET endpoint for backwards compatibility)
   router.get('/api/generate-form222/:clientId/:reportId', async (req, res) => {
     const { clientId, reportId } = req.params;
@@ -70,6 +70,45 @@ function createPDFRoutes(pdfController) {
     const { clientId, reportId } = req.params;
     const templatePath = req.body?.templatePath || null;
     const result = await pdfController.generateInventory(clientId, reportId, templatePath);
+
+    if (result.success) {
+      res.set({
+        'Content-Type': result.data.contentType,
+        'Content-Disposition': result.data.disposition
+      });
+      res.send(result.data.pdfBuffer);
+    } else {
+      res.status(result.statusCode || 500).json({
+        ok: false,
+        error: result.error
+      });
+    }
+  });
+
+  // Generate Invoice PDF (GET endpoint for backwards compatibility)
+  router.get('/api/generate-invoice/:clientId/:reportId', async (req, res) => {
+    const { clientId, reportId } = req.params;
+    const result = await pdfController.generateInvoice(clientId, reportId);
+
+    if (result.success) {
+      res.set({
+        'Content-Type': result.data.contentType,
+        'Content-Disposition': result.data.disposition
+      });
+      res.send(result.data.pdfBuffer);
+    } else {
+      res.status(result.statusCode || 500).json({
+        ok: false,
+        error: result.error
+      });
+    }
+  });
+
+  // Generate Invoice PDF
+  router.post('/api/generate-invoice/:clientId/:reportId', async (req, res) => {
+    const { clientId, reportId } = req.params;
+    const templatePath = req.body?.templatePath || null;
+    const result = await pdfController.generateInvoice(clientId, reportId, templatePath);
 
     if (result.success) {
       res.set({
