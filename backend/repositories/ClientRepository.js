@@ -17,52 +17,18 @@ class ClientRepository extends BaseRepository {
       client &&
       typeof client === 'object' &&
       typeof client.id === 'string' &&
-      typeof client.businessName === 'string' &&
-      // DEA number is optional
-      (client.deaNumber === undefined || client.deaNumber === null || typeof client.deaNumber === 'string')
+      typeof client.businessName === 'string'
     );
   }
 
-  validateDEANumber(deaNumber) {
-    // DEA number is now optional
-    if (!deaNumber) {
-      return { isValid: true, error: null };
-    }
-
-    const dea = deaNumber.toString().trim();
-
-    if (dea.length !== 9) {
-      return { isValid: false, error: 'DEA number must be exactly 9 characters' };
-    }
-
-    return { isValid: true, error: null };
-  }
-
   create(clientData) {
-    // Only validate DEA number if provided
-    if (clientData.deaNumber) {
-      const deaValidation = this.validateDEANumber(clientData.deaNumber);
-      if (!deaValidation.isValid) {
-        throw new Error(deaValidation.error);
-      }
-    }
-
     const clients = this.readData();
-
-    // Only check for duplicate DEA number if one is provided
-    if (clientData.deaNumber) {
-      const existingClient = clients.find(c => c.deaNumber === clientData.deaNumber);
-      if (existingClient) {
-        throw new Error(`Client with DEA number ${clientData.deaNumber} already exists`);
-      }
-    }
 
     const newClient = {
       ...clientData,
       id: clientData.id || this.generateId(),
       name: clientData.businessName,
       reports: clientData.reports || [],
-      deaExpirationDate: clientData.deaExpirationDate || null,
       stateLicenseNumber: clientData.stateLicenseNumber || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -74,29 +40,11 @@ class ClientRepository extends BaseRepository {
   }
 
   update(id, updates) {
-    if (updates.deaNumber) {
-      const deaValidation = this.validateDEANumber(updates.deaNumber);
-      if (!deaValidation.isValid) {
-        throw new Error(deaValidation.error);
-      }
-
-      const clients = this.readData();
-      const existingClient = clients.find(c => c.deaNumber === updates.deaNumber && c.id !== id);
-      if (existingClient) {
-        throw new Error(`Another client with DEA number ${updates.deaNumber} already exists`);
-      }
-    }
-
     if (updates.businessName) {
       updates.name = updates.businessName;
     }
 
     return super.update(id, updates);
-  }
-
-  findByDEANumber(deaNumber) {
-    const clients = this.readData();
-    return clients.find(client => client.deaNumber === deaNumber) || null;
   }
 
   addReport(clientId, reportData) {
@@ -300,7 +248,6 @@ class ClientRepository extends BaseRepository {
     return clients.filter(client =>
       client.businessName?.toLowerCase().includes(searchTerm) ||
       client.name?.toLowerCase().includes(searchTerm) ||
-      client.deaNumber?.toLowerCase().includes(searchTerm) ||
       client.city?.toLowerCase().includes(searchTerm) ||
       client.contactName?.toLowerCase().includes(searchTerm)
     );
