@@ -88,25 +88,32 @@ function migrateClients(clients) {
 
     // Ensure wholesaler fields exist with intelligent defaults
     // Handle both undefined AND null values (from previous migrations)
-    if (migratedClient.wholesaler === undefined || migratedClient.wholesaler === null) {
-      const defaults = getWholesalerDefaults(migratedClient);
-      migratedClient.wholesaler = defaults.wholesaler;
-      clientChanges.push(`Set wholesaler to: "${defaults.wholesaler}"`);
-      needsMigration = true;
-    }
+    // Get defaults once to ensure consistency across all three fields
+    const needsWholesalerDefaults =
+      migratedClient.wholesaler === undefined || migratedClient.wholesaler === null ||
+      migratedClient.accountNumber === undefined || migratedClient.accountNumber === null ||
+      migratedClient.invoicePercentage === undefined || migratedClient.invoicePercentage === null;
 
-    if (migratedClient.accountNumber === undefined || migratedClient.accountNumber === null) {
+    if (needsWholesalerDefaults) {
       const defaults = getWholesalerDefaults(migratedClient);
-      migratedClient.accountNumber = defaults.accountNumber;
-      clientChanges.push(`Set accountNumber to: "${defaults.accountNumber}"`);
-      needsMigration = true;
-    }
 
-    if (migratedClient.invoicePercentage === undefined || migratedClient.invoicePercentage === null) {
-      const defaults = getWholesalerDefaults(migratedClient);
-      migratedClient.invoicePercentage = defaults.invoicePercentage;
-      clientChanges.push(`Set invoicePercentage to: ${defaults.invoicePercentage}%`);
-      needsMigration = true;
+      if (migratedClient.wholesaler === undefined || migratedClient.wholesaler === null) {
+        migratedClient.wholesaler = defaults.wholesaler;
+        clientChanges.push(`Set wholesaler to: "${defaults.wholesaler}"`);
+        needsMigration = true;
+      }
+
+      if (migratedClient.accountNumber === undefined || migratedClient.accountNumber === null) {
+        migratedClient.accountNumber = defaults.accountNumber;
+        clientChanges.push(`Set accountNumber to: "${defaults.accountNumber}"`);
+        needsMigration = true;
+      }
+
+      if (migratedClient.invoicePercentage === undefined || migratedClient.invoicePercentage === null) {
+        migratedClient.invoicePercentage = defaults.invoicePercentage;
+        clientChanges.push(`Set invoicePercentage to: ${defaults.invoicePercentage}%`);
+        needsMigration = true;
+      }
     }
 
     // Ensure 'name' field matches 'businessName'
