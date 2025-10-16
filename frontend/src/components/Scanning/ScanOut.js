@@ -394,6 +394,18 @@ const ScanOut = () => {
           // Mark as FDA verified item - this will lock NDC field from editing
           formLine.hasFDAData = true;
           setEditLine(formLine);
+
+          // Auto-create manufacturer from FDA labeler_name
+          if (fdaResult.labeler_name) {
+            try {
+              console.log(`[ScanOut] Auto-creating/updating manufacturer: ${fdaResult.labeler_name}`);
+              await apiService.saveManufacturer({ name: fdaResult.labeler_name });
+              console.log(`[ScanOut] ✅ Successfully saved manufacturer: ${fdaResult.labeler_name}`);
+            } catch (error) {
+              // Don't interrupt scanning flow if manufacturer creation fails
+              console.warn(`[ScanOut] ⚠️ Failed to auto-create manufacturer: ${error.message}`);
+            }
+          }
         } else {
           msg += `\nFDA: Not found or not recognized.`;
           setEditLine(null);
