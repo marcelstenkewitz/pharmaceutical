@@ -9,8 +9,8 @@ const {
 } = require('./form222-coordinates');
 
 // Check if we're in development mode
-// ALWAYS show Form 222 background for coordinate mapping
-const isDevelopment = true; // process.env.NODE_ENV === 'development' || process.env.FORM_222_DEV_MODE === 'true';
+// Set to false to remove the reference background overlay
+const isDevelopment = false; // process.env.NODE_ENV === 'development' || process.env.FORM_222_DEV_MODE === 'true';
 
 // Path to the coordinate finder PDF (used as background in development)
 const COORDINATE_FINDER_PDF_PATH = path.join(__dirname, '..', 'coordinate-finder-landscape.pdf');

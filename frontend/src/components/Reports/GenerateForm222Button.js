@@ -58,24 +58,49 @@ const GenerateForm222Button = ({ clientId, reportId, report, variant = "outline-
 
       // Get the PDF blob from the response
       const blob = response.data;
-      
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
+
       // Generate filename based on client and report info
       const clientName = getClientName(report?.client, 'Client');
       const reportDate = new Date().toISOString().split('T')[0];
-      link.download = `DEA-Form-222-${clientName.replace(/[^a-zA-Z0-9]/g, '-')}-${reportId}-${reportDate}.pdf`;
-      
-      // Trigger download
-      document.body.appendChild(link);
-      link.click();
-      
-      // Cleanup
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(link);
+      const filename = `DEA-Form-222-${clientName.replace(/[^a-zA-Z0-9]/g, '-')}-${reportId}-${reportDate}.pdf`;
+
+      // Use the File System Access API to show Save As dialog
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [{
+              description: 'PDF Files',
+              accept: { 'application/pdf': ['.pdf'] },
+            }],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } catch (err) {
+          // User cancelled or API not supported, fall back to regular download
+          if (err.name !== 'AbortError') {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(link);
+          }
+        }
+      } else {
+        // Fallback for browsers that don't support File System Access API
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+      }
       
       setShowModal(false);
     } catch (error) {
