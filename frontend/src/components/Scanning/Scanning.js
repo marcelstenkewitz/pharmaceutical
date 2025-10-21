@@ -41,13 +41,13 @@ const Scanning = () => {
     const fetchWholesalers = async () => {
       setWholesalersLoading(true);
       try {
-        const response = await apiService.getWholesalers();
-        console.log('Wholesalers API response:', response);
-        console.log('Wholesalers array:', response.wholesalers);
-        console.log('Wholesalers count:', response.wholesalers?.length || 0);
-        setWholesalers(response.wholesalers || []);
+        const response = await apiService.getManufacturers();
+        console.log('Manufacturers API response:', response);
+        console.log('Manufacturers array:', response.manufacturers);
+        console.log('Manufacturers count:', response.manufacturers?.length || 0);
+        setWholesalers(response.manufacturers || []);
       } catch (error) {
-        console.error('Failed to load wholesalers:', error);
+        console.error('Failed to load manufacturers:', error);
         setWholesalers([]);
       } finally {
         setWholesalersLoading(false);

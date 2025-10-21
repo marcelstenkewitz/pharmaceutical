@@ -120,7 +120,7 @@ echo Press Ctrl+C in each window to stop the respective service
 echo.
 
 REM Start backend in a new window
-start "Backend Server - Pharmaceutical System" cmd /k "cd backend && npm run dev"
+start "Backend Server - Pharmaceutical System" cmd /k "cd backend && echo Starting backend server... && node server.js"
 
 REM Wait a moment for backend to start
 timeout /t 3 /nobreak >nul
