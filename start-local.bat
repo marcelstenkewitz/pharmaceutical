@@ -2,6 +2,9 @@
 REM Pharmaceutical Tracking System - Local Development Startup Script
 REM This script starts both backend and frontend services for local development
 
+REM Change to the directory where this script is located
+cd /d "%~dp0"
+
 echo ==========================================
 echo Pharmaceutical Tracking System
 echo Local Development Startup Script
@@ -9,6 +12,7 @@ echo ==========================================
 echo.
 
 REM Check if Node.js is installed
+echo Checking for Node.js...
 node --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Node.js is not installed!
@@ -18,19 +22,11 @@ if errorlevel 1 (
 )
 
 echo [OK] Node.js is installed
-
-REM Check if npm is installed
-npm --version >nul 2>&1
-if errorlevel 1 (
-    echo [ERROR] npm is not installed!
-    echo Please install npm (usually comes with Node.js)
-    pause
-    exit /b 1
-)
-
-echo [OK] npm is installed
+node --version
 
 REM Check if we're in the right directory
+echo Checking project structure...
+echo Current directory: %CD%
 if not exist "package.json" (
     echo [ERROR] package.json not found!
     echo Please run this script from the project root directory.
